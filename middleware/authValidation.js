@@ -1,5 +1,5 @@
 const jsonwebtoken = require("jsonwebtoken")
-const { success, failure } = require("../common");
+const { success, failure } = require("../constants/common");
 const express = require("express");
 const app = express();
 app.use(express.json());

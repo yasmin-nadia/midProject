@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs").promises;
-const { success, failure } = require("../common");
+const { success, failure } = require("../constants/common");
 const userModel = require("../model/user")
 const authModel = require("../model/auth")
 const express = require("express")
@@ -15,16 +15,13 @@ const moment = require('moment');
 class authenController {
     async signUp(req, res) {
         try {
-            try {
-                const validation = validationResult(req).array()
-                console.log("validation", validation)
-                if (validation.length > 0) {
-                    return res.status(200).send(success("Failed to validate the data", validation));
-                }
+            const validation = validationResult(req).array()
+            console.log("validationResult(req)",validationResult(req));
+            console.log("validation", validation)
+            if (validation.length > 0) {
+                return res.status(200).send(success("Failed to validate the data", validation));
             }
-            catch (er) {
-                console.log("Eroooorr", er)
-            }
+
             const { email, password, name, phone, address, role } = req.body;
             const existingUser = await authModel.findOne({ email: email });
             if (existingUser) {
@@ -144,7 +141,7 @@ class authenController {
     async editUserInfo(req, res) {
         try {
 
-            const {email, role, address, phone } = req.body;
+            const { email, role, name, address, phone } = req.body;
             const user = await userModel.findOne({ email: email });
             if (!user) {
                 return res.status(400).send(success("User is not found"));
@@ -155,6 +152,9 @@ class authenController {
             // Check if each field is provided and update it if necessary
             if (role) {
                 updatedFields.role = role;
+            }
+            if (name) {
+                updatedFields.name = name;
             }
             if (address) {
                 updatedFields.address = address;
