@@ -16,6 +16,7 @@ class authenController {
     async signUp(req, res) {
         try {
             try {
+                console.log("trying from my pc")
                 const validation = validationResult(req).array()
                 console.log("validation", validation)
                 if (validation.length > 0) {
