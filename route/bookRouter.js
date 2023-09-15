@@ -4,9 +4,11 @@ const {validationResult}=require("express-validator");
 
 const authenController = require("../controller/authController");
 const {isAuthorised,isAdmin,isUser}=require("../middleware/authValidation");
-const validator = require('../middleware/userCreateValidation')
+const userValidator = require('../middleware/userCreateValidation')
 
 
 routes.post("/createuser", authenController.signUp);
-routes.post("/login", validator.create, authenController.login)
+routes.post("/login", userValidator.create, authenController.login)
+routes.put("/updateuser",authenController.editUserInfo)
+routes.use(authenController.notFound);
 module.exports=routes;
