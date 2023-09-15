@@ -15,13 +15,12 @@ const moment = require('moment');
 class authenController {
     async signUp(req, res) {
         try {
-            const validation = validationResult(req).array()
-            console.log("validationResult(req)",validationResult(req));
-            console.log("validation", validation)
-            if (validation.length > 0) {
-                return res.status(200).send(success("Failed to validate the data", validation));
-            }
-
+                const validation = validationResult(req).array()
+                console.log("validation", validation)
+                if (validation.length > 0) {
+                    return res.status(200).send(success("Failed to validate the data", validation));
+                }
+            
             const { email, password, name, phone, address, role } = req.body;
             const existingUser = await authModel.findOne({ email: email });
             if (existingUser) {
