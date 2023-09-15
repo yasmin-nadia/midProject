@@ -19,7 +19,7 @@ const authSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        default:"user"
+        required:true
     },
     
     blocked: {

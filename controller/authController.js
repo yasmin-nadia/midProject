@@ -15,10 +15,11 @@ const moment = require('moment');
 class authenController {
     async signUp(req, res) {
         try {
-            // const validation = validationResult(req).array()
-            // if (validation.length > 0) {
-            //     return res.status(200).send(success("Failed to validate the data", validation));
-            // }
+            const validation = validationResult(req).array()
+            console.log("validation",validation)
+            if (validation.length > 0) {
+                return res.status(200).send(success("Failed to validate the data", validation));
+            }
             const { email, password, name, phone, address, role } = req.body;
             const existingUser = await authModel.findOne({ email: email });
             if (existingUser) {
@@ -76,14 +77,16 @@ class authenController {
             const auth = await authModel.findOne({ email: email });
             if (!auth) {
                 return res.status(400).send(success("User is not registered"));
-
+            }
+            if (auth.role !== role) {
+                return res.status(400).send(success("Invalid Role"));
             }
             if (auth.blocked) {
                 const now = moment();
                 const lastUnsuccessfulLoginTime = moment(auth.loginAttempts[auth.loginAttempts.length - 1].timestamp);
 
-
-                if (now.diff(lastUnsuccessfulLoginTime, 'minutes') >= 1) {
+                console.log("lastUnsuccessfulLoginTime",lastUnsuccessfulLoginTime)
+                if (now.diff(lastUnsuccessfulLoginTime, 'minutes') >= 5) {
                     auth.blocked = false; 
                     auth.loginAttempts = []; 
                     await auth.save();
@@ -93,34 +96,31 @@ class authenController {
             }
             const checkedPassword = await bcrypt.compare(password, auth.password)
             if (checkedPassword) {
-
-                if (auth.role === role) {
                     const creden = await authModel.findOne({ email: email }).populate("id");
                     const responseAuth = creden.toObject();
                     delete responseAuth.password;
                     const jwt = jsonwebtoken.sign(responseAuth, process.env.SECRET_KEY, { expiresIn: "1h" });
                     responseAuth.token = jwt;
                     return res.status(200).send(success("Successfully logged in", responseAuth));
-                } else {
-                    return res.status(400).send(success("Invalid Role"));
-                }
             }
             else {
                 const now = moment();
                 const lastHour = moment().subtract(1, 'hours');
-                console.log("lastHour", lastHour, "now", now)
+                console.log("auth",auth)
                 const recentLoginAttempts = auth.loginAttempts.filter((attempt) => moment(attempt.timestamp).isAfter(lastHour));
+                console.log("recentLoginAttempts",recentLoginAttempts)
 
                 if (recentLoginAttempts.length >= 5) {
                     auth.blocked = true;
                     await auth.save();
                     fs.appendFile("./print.log", `User blocked for logging in with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM for ${recentLoginAttempts.length} times \n`);
-
                     return res.status(403).send(success("User is blocked due to too many unsuccessful login attempts."));
                 }
 
                 auth.loginAttempts = recentLoginAttempts;
+                console.log("auth.loginAttempts 1",auth.loginAttempts)
                 auth.loginAttempts.push({ timestamp: now });
+                console.log("auth.loginAttempts 2",auth.loginAttempts)
                 await auth.save();
                 fs.appendFile("./print.log", `Logged with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM for ${auth.loginAttempts.length } times \n`);
                 return res.status(400).send(success("Incorrect credentials"));
