@@ -1,0 +1,19 @@
+[{
+  "email": "carol@gmail.com",
+  "name": "mr carol",
+  "phone": "0100011001",
+  "address": "america"
+  },
+{
+
+  "email": "yasmin@gmail.com",
+  "name": "yasmin nadia",
+  "phone": "0100011001",
+  "address": "america"
+},
+{
+  "address": "china",
+  "email": "bob@gmail.com",
+  "name": "miss bob",
+  "phone": "01977777777"
+}]
