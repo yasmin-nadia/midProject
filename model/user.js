@@ -16,12 +16,22 @@ const userSchema = new mongoose.Schema({
         required: [true, 'phone must be given']
     },
     address: {
-        type: String,
-        required: [true, 'address must be given']
+        area: {
+            type: String,
+            required: [true, 'Area must be given'],
+        },
+        streetAddress: {
+            type: String,
+            required: [true, 'Street address must be given'],
+        },
     },
     cartId: {
         type: mongoose.Types.ObjectId,
         ref: "carts",
+    },
+    userblocked:{
+        type:Boolean,
+        default:false
     }
 })
 const userModel = mongoose.model("users", userSchema);

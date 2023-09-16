@@ -15,12 +15,12 @@ const moment = require('moment');
 class authenController {
     async signUp(req, res) {
         try {
-                const validation = validationResult(req).array()
-                console.log("validation", validation)
-                if (validation.length > 0) {
-                    return res.status(200).send(success("Failed to validate the data", validation));
-                }
-            
+            const validation = validationResult(req).array()
+            console.log("validation", validation)
+            if (validation.length > 0) {
+                return res.status(200).send(success("Failed to validate the data", validation));
+            }
+
             const { email, password, name, phone, address, role } = req.body;
             const existingUser = await authModel.findOne({ email: email });
             if (existingUser) {
@@ -79,9 +79,9 @@ class authenController {
             if (!auth) {
                 return res.status(400).send(success("User is not registered"));
             }
-            if (auth.role !== role) {
-                return res.status(400).send(success("Invalid Role"));
-            }
+            // if (auth.role !== role) {
+            //     return res.status(400).send(success("Invalid Role"));
+            // }
             if (auth.blocked) {
                 const now = moment();
                 const lastUnsuccessfulLoginTime = moment(auth.loginAttempts[auth.loginAttempts.length - 1].timestamp);
@@ -179,6 +179,110 @@ class authenController {
             return res.status(400).send(success("Could not login"));
         }
 
+    }
+    async editSelfInfo(req, res) {
+        try {
+
+            const { email, password, name, address, phone } = req.body;
+
+            const token = req.headers.authorization.split(" ")[1];
+            const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
+            const user = await userModel.findOne({ email: decodedToken.email });
+            if (!user) {
+                return res.status(400).send(success("User is not found"));
+            }
+            // Create an object to hold the fields to update
+            const updatedFields = {};
+            const updatedAuthFields = {};
+            let flag = false
+
+            // Check if each field is provided and update it if necessary
+            if (name) {
+                updatedFields.name = name;
+            }
+            if (address) {
+                updatedFields.address = address;
+            }
+            if (phone) {
+                updatedFields.phone = phone;
+            }
+            if (email || password) {
+                flag = true
+            }
+            if (email) {
+                updatedFields.email = email;
+                updatedAuthFields.email = email;
+            }
+
+            // console.log(hashedPassword)
+            if (password) {
+                const hashedPassword = await bcrypt.hash(password, 10).then((hash) => {
+                    return hash;
+
+                })
+                updatedAuthFields.password = hashedPassword;
+            }
+
+            // Update the user document with the provided fields
+            const updatedUser = await userModel.findOneAndUpdate(
+                { email: decodedToken.email },
+                { $set: updatedFields },
+                { new: true } // To return the updated user document
+            );
+            if (flag) {
+                const updatedAuth = await authModel.findOneAndUpdate(
+                    { email: decodedToken.email },
+                    { $set: updatedAuthFields },
+                    { new: true } // To return the updated user document
+                );
+            }
+
+
+            return res.status(200).send(success("User information updated", updatedUser));
+
+
+
+        }
+        catch (error) {
+            console.log("Login error", error)
+            return res.status(400).send(success("Could not update"));
+        }
+
+    }
+    async deleteUser(req, res) {
+        try {
+            const { email } = req.body;
+            const user = await userModel.findOne({ email: email });
+            const auth = await authModel.findOne({ email: email });
+
+            if (!(user)) {
+                return res.status(200).send(success("Couldnt find any data for deleting from user collection"));
+                // return res.status(200).send(success("Successfully could delete data", cast));
+            }
+            if (!(auth)) {
+                return res.status(200).send(success("Couldnt find any data for deleting from authentication collection"));
+            }
+            const user1 = await userModel.deleteOne({ email: email });
+            const auth1 = await authModel.deleteOne({ email: email });
+
+            return res.status(200).send(success("Successfully could delete data", user1));
+
+        }
+        catch (error) {
+            console.log("Login error", error)
+            return res.status(500).send(success("Could not delete"));
+        }
+    }
+    async getUsers(req, res) {
+        try{
+            const users = await userModel.find({});
+            return res.status(200).send(success({ message: "List of users",users }));
+        }
+        catch(error){
+            console.log("Get users", error)
+            return res.status(500).send(success({ message: "Could not get users" }));
+        }
+        
     }
     async notFound(req, res) {
         return res.status(404).send(success({ message: "URL Not found" }));
