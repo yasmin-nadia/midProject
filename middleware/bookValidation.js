@@ -106,7 +106,7 @@ const bookValidator = (req, res, next) => {
 }
 const bookUpdateValidator = (req, res, next) => {
     try {
-        const { title, author, price, stock, genre, pages, category, publisher, description } = req.body;
+        const { title, author, price, stock, genre, pages, category, publisher, description, rate } = req.body;
         const message = [];
 
         if (title) {
@@ -176,6 +176,13 @@ const bookUpdateValidator = (req, res, next) => {
                 message.push("Stock must be an integer between 1 and 300");
             }
         }
+        if (rate) {
+
+
+            if (typeof rate !== 'number' || rate <= 0 || stock > 5) {
+                message.push("Rate must be an number between 0.1 and 5");
+            }
+        }
         if (pages) {
 
 
@@ -211,7 +218,104 @@ const bookUpdateValidator = (req, res, next) => {
             return res.status(500).send(failure("Internal server error"));
         }
     };
-    
-}
 
-module.exports = { bookValidator, bookUpdateValidator };
+}
+const getBookValidator = (req, res, next) => {
+    try {
+        const { limit, page, title,author,publisher,price, pages, stock, rate, priceFlow, stockFlow, rateFlow, pagesFlow, priceUpperBound, priceLowerBound } = req.query;
+        const response = {};
+
+        // Validate limit
+        if (!Number.isInteger(parseInt(limit)) || parseInt(limit) < 1 || parseInt(limit) > 20) {
+            response.limit = "Invalid 'limit' parameter. It must be an integer between 1 and 20.";
+        }
+
+        // Validate page
+        if (!Number.isInteger(parseInt(page)) || parseInt(page) < 1 || parseInt(page) > 20) {
+            response.page = "Invalid 'page' parameter. It must be an integer between 1 and 20.";
+        }
+
+        // Validate priceFlow
+        const validFlows = ["upper", "lower"];
+        if (!validFlows.includes(priceFlow)) {
+            response.priceFlow = "Invalid 'priceFlow' parameter. It must be either 'upper' or 'lower'.";
+        }
+
+        // Validate stockFlow
+        if (!validFlows.includes(stockFlow)) {
+            response.stockFlow = "Invalid 'stockFlow' parameter. It must be either 'upper' or 'lower'.";
+        }
+
+        // Validate rateFlow
+        if (!validFlows.includes(rateFlow)) {
+            response.rateFlow = "Invalid 'rateFlow' parameter. It must be either 'upper' or 'lower'.";
+        }
+
+        // Validate pagesFlow
+        if (!validFlows.includes(pagesFlow)) {
+            response.pagesFlow = "Invalid 'pagesFlow' parameter. It must be either 'upper' or 'lower'.";
+        }
+
+        // Validate priceUpperBound
+        if (isNaN(priceUpperBound)) {
+            response.priceUpperBound = "Invalid 'priceUpperBound' parameter. It must be a number.";
+        }
+
+        // Validate priceLowerBound
+        if (isNaN(priceLowerBound)) {
+            response.priceLowerBound = "Invalid 'priceLowerBound' parameter. It must be a number.";
+        }
+        // valid fields 
+        const validSortFields = ['title', 'author', 'publisher','price', 'stock', 'rate','pages'];
+        if (sortField) {
+            // query param valid or not
+            if (!validSortFields.includes(sortField)) {
+                response.sortField = "Invalid sortField parameter";
+            }
+
+        }
+        const validOrders = ['asc', 'desc'];
+        if (order) {
+            // query param valid or not
+            if (!validOrders.includes(order)) {
+                response.order = "Invalid order parameter";
+            }
+
+        }
+        if (pagesFlow && !pages) {
+            response.pages = "'page' parameter is required when 'pagesFlow' is provided.";
+        }
+
+        if (rateFlow && !rate) {
+            response.rate = "'rate' parameter is required when 'rateFlow' is provided.";
+        }
+
+        if (priceFlow && !price) {
+            response.price = "'price' parameter is required when 'priceFlow' is provided.";
+        }
+
+        if (stockFlow && !stock) {
+            response.stock = "'stock' parameter is required when 'stockFlow' is provided.";
+        }
+        // Check if either both priceUpperBound and priceLowerBound are provided or neither
+        if ((priceUpperBound && !priceLowerBound) || (!priceUpperBound && priceLowerBound)) {
+            response.priceBounds = "Both 'priceUpperBound' and 'priceLowerBound' must be provided or neither.";
+        }
+
+
+        // Check if there are validation errors
+        if (Object.keys(response).length > 0) {
+            return res.status(400).send({ errors: response });
+        }
+
+
+        // If validation passes, continue to the next middleware or route handler
+        next();
+    } catch (error) {
+        console.error("Error while validating query parameters", error);
+        return res.status(500).send(failure("Internal server error"));
+    }
+};
+
+
+module.exports = { bookValidator, bookUpdateValidator, getBookValidator };

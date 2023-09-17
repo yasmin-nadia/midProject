@@ -117,5 +117,145 @@ class bookController {
             return res.status(500).send(success("Internal server error"));
         }
     }
+    async getBook(req, res) {
+        try {
+            // object destructuring
+            let { page, limit, searchParam, price, order,pages, priceFlow, sortField, category, stockFlow, pagesFlow,stock, priceUpperBound, priceLowerBound, rate, rateFlow } = req.query;
+
+            console.log("{page,limit}", page, limit);
+
+            // Create a query object
+            const query = {};
+            if (!(page)) {
+                page = 1
+            }
+            if (!(limit)) {
+                limit = 5
+            }
+
+            // creates regular expression
+            if (searchParam) {
+                const regex = new RegExp(searchParam, 'i'); // 'i' flag for case-insensitive search
+                query.$or = [{ category: regex }, { author: regex }, { publisher: regex }, { title: regex }, { description: regex }]; //or operation
+            }
+
+            if (stock && (stockFlow === 'upper' || stockFlow === 'lower')) {
+
+                const stockFilter = stockFlow === 'upper' ? { $gte: parseFloat(stock) } : { $lte: parseFloat(stock) };
+                query.stock = stockFilter;
+            }
+            else if (stock) {
+                const stockFilter = { $eq: parseFloat(stock) }
+                query.stock = stockFilter;
+            }
+            if (price && (priceFlow === 'upper' || priceFlow === 'lower')) {
+
+                if (priceFlow === 'upper') {
+                    query.price = { $gte: parseFloat(price) };
+                } else {
+                    query.price = { $lte: parseFloat(price) };
+                }
+
+
+            }
+            else if (price) {
+                query.price = {
+                    $eq: parseFloat(price)
+                };
+            } else if (priceUpperBound && priceLowerBound) {
+                if (isNaN(parseFloat(priceLowerBound)) || isNaN(parseFloat(priceUpperBound))) {
+                    return res.status(200).send(success("Both bounds must be valid numbers."));
+                }
+                if (parseFloat(priceLowerBound) > parseFloat(priceUpperBound)) {
+                    return res.status(200).send(success("Invalid price range"));
+                }
+                query.price = {
+                    $gte: parseFloat(priceLowerBound),
+                    $lte: parseFloat(priceUpperBound),
+                };
+            }
+
+            if (rate && (rateFlow === 'upper' || rateFlow === 'lower')) {
+
+                if (rateFlow === 'upper') {
+                    query.rate = { $gte: parseFloat(rate) };
+                } else {
+                    query.rate = { $lte: parseFloat(price) };
+                }
+
+
+            }
+            else if (rate) {
+                query.rate = {
+                    $eq: parseFloat(rate)
+                };
+            }
+            if (pages && (pagesFlow === 'upper' || pagesFlow === 'lower')) {
+
+                if (pagesFlow === 'upper') {
+                    query.pages = { $gte: parseFloat(pages) };
+                } else {
+                    query.pages = { $lte: parseFloat(pages) };
+                }
+
+
+            }
+            else if (pages) {
+                query.pages = {
+                    $eq: parseFloat(pages)
+                };
+            }
+
+            // pagination
+            const options = {
+                skip: (page - 1) * limit,
+                limit: parseInt(limit),
+            };
+            if (sortField && !(order)) {
+                options.sort = { [sortField]: 1 }; // Ascending order by default
+            }
+
+            // Sort based on any field in ascending or descending order
+            if (order) {
+                if (order === 'asc') {
+                    options.sort = { [sortField]: 1 }; // Ascending order
+                } else if (order === 'desc') {
+                    options.sort = { [sortField]: -1 }; // Descending order
+                } else {
+                    return res.status(200).send(success("priceOrder parameter is invalid"));
+                }
+            }
+
+            if (category && Array.isArray(category)) {
+                query.category = { $in: category };
+            } else if (category) {
+                query.category = category;
+            }
+
+
+            // Find documents that match the query
+            const mangas = await mangasModel.find(query, null, options).populate({
+                path: 'review',
+                select: '-_id reviewText user', // Include the user field from the review
+                populate: {
+                    path: 'user', // Specify the path to populate
+                    select: '-_id name', // Select the username field from the user
+                },
+            });
+
+
+            if (mangas.length > 0) {
+                console.log(mangas);
+                return res.status(200).send(success("Successfully received", mangas));
+            }
+            if (mangas.length == 0) {
+                return res.status(200).send(success("No mangas were found"));
+            }
+        }
+        catch (error) {
+            console.log("Get book error", error)
+            return res.status(500).send(success("Internal server error"));
+        }
+    }
 }
 module.exports = new bookController();

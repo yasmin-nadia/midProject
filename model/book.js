@@ -23,15 +23,15 @@ const booksSchema = new mongoose.Schema({
     },
     discountedPrice: {
         type: Number,
-        default:0
+        default: 0
     },
     category: {
         type: String,
-        required:true,
+        required: true,
     },
     genre: [{
         type: String,
-        required:true,
+        required: true,
     }],
     pages: {
         type: Number,
@@ -48,14 +48,19 @@ const booksSchema = new mongoose.Schema({
     reviews: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "reviews",
+            ref: "reviewcollections",
         }],
-    rate: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "reviews",
-        }],
-
+    ratings: {
+        userRate: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "ratecollections",
+            }],
+        rate: {
+            type: Number,
+            default: 0
+        }
+    }
 })
 
 const bookModel = mongoose.model("books", booksSchema);
