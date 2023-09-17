@@ -357,8 +357,25 @@ const userLoginValidator = (req, res, next) => {
         return res.status(500).send(failure("Internal server error"));
     }
 }
+const balancedDataValidator = (req, res, next) => {
+    try {
+        const { balancedData } = req.body;
+
+        // Check if balancedData is not a number or not within the specified range
+        if (typeof balancedData !== 'number' || balancedData < 100 || balancedData > 30000) {
+            return res.status(400).send(failure("Invalid balancedData. It must be a number between 100 and 30000."));
+        }
+
+        // If validation passes, continue to the next middleware or route handler
+        next();
+    } catch (error) {
+        console.error("Error while validating balancedData", error);
+        return res.status(500).send(failure("Internal server error"));
+    }
+};
 
 
 
 
-module.exports = { userValidator, userUpdateValidator,userLoginValidator };
+
+module.exports = { userValidator, userUpdateValidator,userLoginValidator,balancedDataValidator };

@@ -270,7 +270,7 @@ class authenController {
         }
         catch (error) {
             console.log("Login error", error)
-            return res.status(500).send(success("Could not delete"));
+            return res.status(500).send(success("Internal server error"));
         }
     }
     async getUsers(req, res) {
@@ -283,6 +283,28 @@ class authenController {
             return res.status(500).send(success({ message: "Could not get users" }));
         }
         
+    }
+    async addBalance(req, res, next) {
+        try {
+            const { balancedData } = req.body;
+            const token = req.headers.authorization.split(" ")[1];
+            const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
+            const user = await userModel.findOne({ email: decodedToken.email });
+            if (!user) {
+                return res.status(400).send(success("User is not found"));
+            }
+            user.balancedData += balancedData;
+
+            // Save the updated user to the database
+            await user.save();
+    
+            return res.status(200).send(success("Balance added successfully", user));
+
+        }
+        catch(error){
+            console.log("Add balance", error)
+            return res.status(500).send(success({ message: "Internal server error" }));
+        }
     }
     async notFound(req, res) {
         return res.status(404).send(success({ message: "URL Not found" }));

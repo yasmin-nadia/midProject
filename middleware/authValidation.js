@@ -12,7 +12,7 @@ const isAuthorised = (req, res, next) => {
         const jwt = req.headers.authorization.split(" ")[1];
         const validate = jsonwebtoken.verify(jwt, process.env.SECRET_KEY);
         if (validate) {
-            console.log("validate", validate)
+            // console.log("validate", validate)
             next();
         }
         else {
@@ -28,7 +28,7 @@ const isAuthorised = (req, res, next) => {
             return res.status(200).send(success("Token expired"))
         }
         const jwt = req.headers.authorization.split(" ")[1];
-        console.log("jwt", jwt)
+        // console.log("jwt", jwt)
 
         return res.status(200).send(success("Issue related to token"))
 
