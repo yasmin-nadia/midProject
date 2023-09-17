@@ -15,11 +15,35 @@ const moment = require('moment');
 class bookController {
     async addBook(req, res) {
         try {
-            
-        }
+            const { title, author, price, stock, genre, pages, category, publisher, description } = req.body;
+            const existingBook = await authModel.findOne({ title: title });
+            if (existingBook) {
+                return res.status(200).send(success("This book already exists"));
+            }
+                const result = await bookModel.create({
+
+                    title: title,
+                    author: author,
+                    price: price,
+                    stock: stock,
+                    genre:genre,
+                    pages:pages,
+                    category:category,
+                    publisher:publisher,
+                    description:description
+    
+                })
+                if (result) {
+                        return res.status(200).send(success("New book added", result));
+                    }
+                else {
+                    return res.status(200).send(success("Could not add a new book"));
+                }
+            }
+        
         catch(error){
             console.log("Book add error", error)
-            return res.status(500).send(success("Could not add a new book"));
+            return res.status(500).send(success("Internal server error"));
         }
     }
 }

@@ -32,6 +32,10 @@ const userSchema = new mongoose.Schema({
     userblocked:{
         type:Boolean,
         default:false
+    },
+    balancedData:{
+        type:Number,
+        default:0,
     }
 })
 const userModel = mongoose.model("users", userSchema);
