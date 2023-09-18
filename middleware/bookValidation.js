@@ -222,7 +222,7 @@ const bookUpdateValidator = (req, res, next) => {
 }
 const getBookValidator = (req, res, next) => {
     try {
-        const { limit, page, title,author,publisher,price, pages, stock, rate, priceFlow, stockFlow, rateFlow, pagesFlow, priceUpperBound, priceLowerBound } = req.query;
+        const { limit, page,price, pages, stock, rate, priceFlow, stockFlow, rateFlow, pagesFlow, priceUpperBound, priceLowerBound ,sortField,order,genre} = req.query;
         const response = {};
 
         // Validate limit
@@ -237,25 +237,37 @@ const getBookValidator = (req, res, next) => {
 
         // Validate priceFlow
         const validFlows = ["upper", "lower"];
+        if(priceFlow){
         if (!validFlows.includes(priceFlow)) {
             response.priceFlow = "Invalid 'priceFlow' parameter. It must be either 'upper' or 'lower'.";
-        }
+        }}
 
         // Validate stockFlow
+        if(stockFlow){
         if (!validFlows.includes(stockFlow)) {
             response.stockFlow = "Invalid 'stockFlow' parameter. It must be either 'upper' or 'lower'.";
-        }
+        }}
 
         // Validate rateFlow
+        if(rateFlow){
         if (!validFlows.includes(rateFlow)) {
             response.rateFlow = "Invalid 'rateFlow' parameter. It must be either 'upper' or 'lower'.";
-        }
+        }}
 
         // Validate pagesFlow
+        if(pagesFlow){
         if (!validFlows.includes(pagesFlow)) {
             response.pagesFlow = "Invalid 'pagesFlow' parameter. It must be either 'upper' or 'lower'.";
+        }}
+        if ((priceUpperBound && !priceLowerBound) || (!priceUpperBound && priceLowerBound)) {
+            response.priceBounds = "Both 'priceUpperBound' and 'priceLowerBound' must be provided or neither.";
         }
-
+        
+        // Validate price
+        if (price && (priceUpperBound || priceLowerBound)) {
+            response.price = "Either 'price' or both 'priceUpperBound' and 'priceLowerBound' must be provided.";
+        }
+        if (priceUpperBound&&priceLowerBound){
         // Validate priceUpperBound
         if (isNaN(priceUpperBound)) {
             response.priceUpperBound = "Invalid 'priceUpperBound' parameter. It must be a number.";
@@ -265,6 +277,10 @@ const getBookValidator = (req, res, next) => {
         if (isNaN(priceLowerBound)) {
             response.priceLowerBound = "Invalid 'priceLowerBound' parameter. It must be a number.";
         }
+        if (parseFloat(priceLowerBound) > parseFloat(priceUpperBound)) {
+            response.boundError = "Invalid price range";
+            return res.status(200).send(success("Invalid price range"));
+        }}
         // valid fields 
         const validSortFields = ['title', 'author', 'publisher','price', 'stock', 'rate','pages'];
         if (sortField) {

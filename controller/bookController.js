@@ -120,7 +120,7 @@ class bookController {
     async getBook(req, res) {
         try {
             // object destructuring
-            let { page, limit, searchParam, price, order,pages, priceFlow, sortField, category, stockFlow, pagesFlow,stock, priceUpperBound, priceLowerBound, rate, rateFlow } = req.query;
+            let { page, limit, searchParam, price, order,pages, priceFlow, sortField, category, stockFlow, pagesFlow,stock, priceUpperBound, priceLowerBound, rate, rateFlow,genre } = req.query;
 
             console.log("{page,limit}", page, limit);
 
@@ -162,13 +162,8 @@ class bookController {
                 query.price = {
                     $eq: parseFloat(price)
                 };
-            } else if (priceUpperBound && priceLowerBound) {
-                if (isNaN(parseFloat(priceLowerBound)) || isNaN(parseFloat(priceUpperBound))) {
-                    return res.status(200).send(success("Both bounds must be valid numbers."));
-                }
-                if (parseFloat(priceLowerBound) > parseFloat(priceUpperBound)) {
-                    return res.status(200).send(success("Invalid price range"));
-                }
+            }
+             if (priceUpperBound && priceLowerBound) {
                 query.price = {
                     $gte: parseFloat(priceLowerBound),
                     $lte: parseFloat(priceUpperBound),
@@ -231,25 +226,32 @@ class bookController {
             } else if (category) {
                 query.category = category;
             }
+            if (genre) {
+                // Check if genre is an array or a single value
+                if (Array.isArray(genre)) {
+                    query.genre = { $in: genre };
+                }
+            }
 
 
             // Find documents that match the query
-            const mangas = await mangasModel.find(query, null, options).populate({
-                path: 'review',
-                select: '-_id reviewText user', // Include the user field from the review
-                populate: {
-                    path: 'user', // Specify the path to populate
-                    select: '-_id name', // Select the username field from the user
-                },
-            });
+            const books = await bookModel.find(query, null, options);
+            // .populate({
+            //     path: 'review',
+            //     select: '-_id reviewText user', // Include the user field from the review
+            //     populate: {
+            //         path: 'user', // Specify the path to populate
+            //         select: '-_id name', // Select the username field from the user
+            //     },
+            // });
 
 
-            if (mangas.length > 0) {
-                console.log(mangas);
-                return res.status(200).send(success("Successfully received", mangas));
+            if (books.length > 0) {
+                console.log(books);
+                return res.status(200).send(success("Successfully received", books));
             }
-            if (mangas.length == 0) {
-                return res.status(200).send(success("No mangas were found"));
+            if (books.length == 0) {
+                return res.status(404).send(success("No books found"));
             }
         }
         catch (error) {

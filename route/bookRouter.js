@@ -6,7 +6,7 @@ const authenController = require("../controller/authController");
 const {isAuthorised,isAdmin,isUser}=require("../middleware/authValidation");
 // const {validator}  = require('../middleware/userCreateValidation');
 const {userValidator,userUpdateValidator,userLoginValidator,balancedDataValidator}  = require('../middleware/userValidation');
-const {bookValidator,bookUpdateValidator}  = require('../middleware/bookValidation');
+const {bookValidator,bookUpdateValidator,getBookValidator}  = require('../middleware/bookValidation');
 const urlnotfound=require("../constants/urlnotfound");
 const bookController = require("../controller/bookController");
 // USER
@@ -21,6 +21,7 @@ routes.put("/addbalance",isAuthorised,isUser,balancedDataValidator,authenControl
 routes.post("/addbook",isAuthorised,isAdmin,bookValidator,bookController.addBook)
 routes.put("/updatebook",isAuthorised,isAdmin,bookUpdateValidator,bookController.updateBook)
 routes.delete("/deletebook",isAuthorised,isAdmin,bookUpdateValidator,bookController.deleteBook)
+routes.get("/getbook",bookUpdateValidator,getBookValidator,bookController.getBook)
 //URL NOT FOUND
 routes.use(urlnotfound.notFound);
 module.exports=routes;
