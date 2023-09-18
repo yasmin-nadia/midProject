@@ -47,14 +47,14 @@ const booksSchema = new mongoose.Schema({
     },
     reviews: [
         {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "reviewcollections",
+            type: mongoose.Types.ObjectId,
+            ref: "reviews",
         }],
     ratings: {
         userRate: [
             {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "ratecollections",
+                type: mongoose.Types.ObjectId,
+                ref: "rates",
             }],
         rate: {
             type: Number,

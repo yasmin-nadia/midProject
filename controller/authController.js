@@ -306,6 +306,12 @@ class authenController {
             return res.status(500).send(success({ message: "Internal server error" }));
         }
     }
+    async addReview(req, res, next) {
+        try {}
+        catch(error){
+            console.log("Add review", error)
+            return res.status(500).send(success({ message: "Internal server error" }));
+        }}
     async notFound(req, res) {
         return res.status(404).send(success({ message: "URL Not found" }));
     }
