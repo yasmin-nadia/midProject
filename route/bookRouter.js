@@ -10,6 +10,7 @@ const {bookValidator,bookUpdateValidator,getBookValidator}  = require('../middle
 const {reviewValidator,reviewDeleteValidator,rateValidator,rateDeleteValidator}  = require('../middleware/reviewValidation');
 const urlnotfound=require("../constants/urlnotfound");
 const bookController = require("../controller/bookController");
+const cartController = require("../controller/cartController");
 // USER
 routes.post("/createuser", userValidator,authenController.signUp);
 routes.post("/login", userLoginValidator, authenController.login)
@@ -29,6 +30,8 @@ routes.delete("/deletereview",isAuthorised,isUser,reviewDeleteValidator,bookCont
 routes.post("/addrate",isAuthorised,isUser,rateValidator,bookController.addRate)
 routes.put("/updaterate",isAuthorised,isUser,rateValidator,bookController.updateRate)
 routes.delete("/deleterate",isAuthorised,isUser,rateDeleteValidator,bookController.deleteRate)
+//ADD TO CART
+routes.post("/addtocart",cartController.AddtoCart)
 //URL NOT FOUND
 routes.use(urlnotfound.notFound);
 module.exports=routes;
