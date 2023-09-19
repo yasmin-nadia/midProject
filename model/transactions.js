@@ -20,6 +20,10 @@ const transactionsSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    created:{
+        type: Date,
+    
+    }
 
 },
     { timestamps: true })

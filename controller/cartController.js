@@ -281,7 +281,8 @@ class cartController {
             const newTransaction = new transactionModel({
                 userId: user._id,
                 cartId: userCart._id,
-                total: total
+                total: total,
+                created: new Date()
             });
 
             userCart.bookId = [];
@@ -401,28 +402,64 @@ class cartController {
     }
     async cancelOrder(req, res) {
         try {
+            // const { transactionId } = req.body; // Assuming you have a request body with transactionId
+    
+            // Find the transaction by transactionId
+            
+            const token = req.headers.authorization.split(' ')[1];
+            const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
+            const user = await userModel.findOne({email:decodedToken.email});
+            const transaction = await transactionModel.findById(user.transactionId);
 
-                // Find all transactions in the transactionModel
-                const transactions = await transactionModel.find()
-                    .populate({
-                        path: 'userId',
-                        select: 'name' // Only populate the 'name' field from the 'userId' reference
-                    })
-                    .populate({
-                        path: 'cartId',
-                        select: 'total' // Only populate the 'total' field from the 'cartId' reference
-                    });
-        
-                // Return the populated transactions
-                return res.status(200).send(success("All transactions retrieved", { Transactions: transactions }));
-
-        }
-        catch (error) {
-            console.error('Checkout error', error);
+            console.log("decodedToken",decodedToken)
+    
+            if (!transaction) {
+                return res.status(404).send(failure(`Transaction not found`));
+            }
+    
+            // Get the timestamp of the transaction's createdAt field
+            const transactionTimestamp = new Date(transaction.createdAt);
+    
+            // Calculate the time difference in milliseconds
+            const currentTime = new Date();
+            const timeDifference = currentTime - transactionTimestamp;
+    
+            // Check if the time difference is less than 5 minutes (300,000 milliseconds)
+            if (timeDifference < 300000) {
+                const resultTran = await transactionModel.findByIdAndDelete(transaction._id)
+                const user = await userModel.findById(transaction.userId);
+                if (user) {
+                    user.transactionId = undefined;
+                    await user.save();
+                }
+  
+                return res.status(200).send(success("Transaction canceled successfully"));
+            } else {
+                // Deduct 100 taka 
+                const user = await userModel.findById(transaction.userId);
+                const resultTran = await transactionModel.findByIdAndDelete(transaction._id);
+    
+                if (!user) {
+                    return res.status(404).send(failure(`User with ID not found`));
+                }
+    
+                if (user.balancedData < 100) {
+                    user.userBlocked = true;
+                    await user.save();
+                    return res.status(200).send(failure("Insufficient balance. User is blocked from further orders. Please add balance to continue."));
+                } else {
+                    user.balancedData -= 100;
+                    await user.save();
+    
+                    return res.status(200).send(success("Transaction canceled and 100 taka deducted from your balance"));
+                }
+            }
+        } catch (error) {
+            console.error('Cancel order error', error);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
-
+    
 
 
 }

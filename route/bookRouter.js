@@ -41,6 +41,7 @@ routes.post("/checkout",isAuthorised,isUser,checkoutValidator,cartController.cre
 routes.get("/showcart",isAuthorised,isUser,cartController.showCart)
 routes.get("/showtransaction",isAuthorised,isUser,cartController.showTransaction)
 routes.get("/showalltransaction",isAuthorised,isAdmin,cartController.showAllTransaction)
+routes.delete("/cancelorder",cartController.cancelOrder)
 //ADD TO DISCOUNT
 routes.post("/adddiscount",isAuthorised,isAdmin,discountController.addDiscount)
 routes.put("/updatediscount",isAuthorised,isAdmin,discountUpdateValidator,discountController.updateDiscount)
