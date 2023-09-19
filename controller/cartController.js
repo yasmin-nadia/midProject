@@ -181,7 +181,7 @@ class cartController {
 
 
             if (!user) {
-                return res.status(404).send(failure(`User with ID ${userId} not found`));
+                return res.status(404).send(failure(`User with ID ${decodedToken._id} not found`));
             }
 
             // Check if the total is greater than or equal to user.balance

@@ -8,6 +8,7 @@ const {isAuthorised,isAdmin,isUser}=require("../middleware/authValidation");
 const {userValidator,userUpdateValidator,userLoginValidator,balancedDataValidator}  = require('../middleware/userValidation');
 const {bookValidator,bookUpdateValidator,getBookValidator}  = require('../middleware/bookValidation');
 const {reviewValidator,reviewDeleteValidator,rateValidator,rateDeleteValidator}  = require('../middleware/reviewValidation');
+const {cartValidator,checkoutValidator}  = require('../middleware/cartValidation');
 const urlnotfound=require("../constants/urlnotfound");
 const bookController = require("../controller/bookController");
 const cartController = require("../controller/cartController");
@@ -32,10 +33,10 @@ routes.post("/addrate",isAuthorised,isUser,rateValidator,bookController.addRate)
 routes.put("/updaterate",isAuthorised,isUser,rateValidator,bookController.updateRate)
 routes.delete("/deleterate",isAuthorised,isUser,rateDeleteValidator,bookController.deleteRate)
 //ADD TO CART AND CHECKOUT
-routes.post("/addtocart",isAuthorised,isUser,cartController.AddtoCart)
-routes.post("/checkout",isAuthorised,isUser,cartController.createTransaction)
+routes.post("/addtocart",isAuthorised,isUser,cartValidator,cartController.AddtoCart)
+routes.post("/checkout",isAuthorised,isUser,checkoutValidator,cartController.createTransaction)
 //ADD TO DISCOUNT
-routes.post("/adddiscount",discountController.addDiscount)
+routes.post("/adddiscount",isAuthorised,isAdmin,discountController.addDiscount)
 //URL NOT FOUND
 routes.use(urlnotfound.notFound);
 module.exports=routes;
