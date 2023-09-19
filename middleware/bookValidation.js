@@ -4,7 +4,7 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+const HTTP_STATUS = require("../constants/statusCodes");
 const bookValidator = (req, res, next) => {
     try {
         const { title, author, price, stock, genre, pages, category, publisher, description } = req.body;

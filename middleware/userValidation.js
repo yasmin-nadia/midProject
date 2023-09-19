@@ -4,7 +4,7 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+const HTTP_STATUS = require("../constants/statusCodes");
 const userValidator = (req, res, next) => {
     try {
         const { email, name, password, address, phone, role, key } = req.body;
