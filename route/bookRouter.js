@@ -37,7 +37,7 @@ routes.delete("/deleterate",isAuthorised,isUser,rateDeleteValidator,bookControll
 //ADD TO CART AND CHECKOUT
 routes.post("/addtocart",isAuthorised,isUser,cartValidator,cartController.AddtoCart)
 routes.delete("/removefromcart",isAuthorised,isUser,cartRemoveValidator,cartController.removeFromCart)
-routes.post("/checkout",isAuthorised,isUser,checkoutValidator,cartController.createTransaction)
+routes.post("/checkout",isAuthorised,isUser,cartController.createTransaction)
 routes.get("/showcart",isAuthorised,isUser,cartController.showCart)
 routes.get("/showtransaction",isAuthorised,isUser,cartController.showTransaction)
 routes.get("/showalltransaction",isAuthorised,isAdmin,cartController.showAllTransaction)

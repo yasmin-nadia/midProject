@@ -38,18 +38,19 @@ class cartController {
             //if prev cart is checked and user trying to add new cart then delete prev cart
             if (cartItem) {
                 console.log("cartItem", cartItem);
-    
+
                 // Check if cart.checked is true
                 if (cartItem.checked) {
                     // Delete the cart from cartModel
                     await cartModel.findByIdAndDelete(userItem.cartId);
-                    
+
                     // Clear userItem.cartId
                     userItem.cartId = undefined;
                     await userItem.save();
-    
+
                     // return res.status(200).send(success("Cart deleted as it is checked"));
-                }}
+                }
+            }
 
             let flag = false;
 
@@ -168,7 +169,7 @@ class cartController {
                 fs.appendFile("../server/print.log", `User has no cart at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`Cart for user not found`));
             }
-    
+
             // Find the index of the book to be removed in the cart's bookId array
             const bookIndexToRemove = cartItem.bookId.findIndex((cartBook) =>
                 cartBook.id.equals(BookId)
@@ -177,12 +178,12 @@ class cartController {
                 fs.appendFile("../server/print.log", `Index error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`Book with ID ${BookId} not found in the cart`));
             }
-    const removedBook = cartItem.bookId[bookIndexToRemove];
+            const removedBook = cartItem.bookId[bookIndexToRemove];
             let amountToSubtract = 0;
 
             // Check if the removed book has a discount
             const bookItem = await bookModel.findById(removedBook.id);
-    
+
             if (bookItem) {
                 if (bookItem.discount) {
                     // Calculate the discounted price
@@ -192,14 +193,14 @@ class cartController {
                     amountToSubtract = bookItem.price * removedBook.quantity;
                 }
             }
-    
+
             // Subtract the amount from the cart's total
             cartItem.total -= amountToSubtract;
-    
+
             // Remove the book from the cart's bookId array
             cartItem.bookId.splice(bookIndexToRemove, 1);
 
-    
+
             // Save the updated cart
             await cartItem.save();
             fs.appendFile("../server/print.log", `Book removed from cart at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
@@ -211,12 +212,20 @@ class cartController {
     }
     async createTransaction(req, res) {
         try {
-            const { cartId } = req.body;
-            const userCart = await cartModel.findById(cartId);
+            // const { cartId } = req.body;
+            
+           
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
+            const userItem = await userModel.findOne({ email: decodedToken.email });
 
-
+            console.log("decodedToken",decodedToken,"cartid",decodedToken.cartId)
+            console.log("userItem",userItem)
+            let cartId=userItem.cartId
+            cartId=cartId.toString();
+            let totalPages
+            // const cartId=decodedToken
+            const userCart = await cartModel.findById(cartId);
             if (!userCart) {
                 fs.appendFile("../server/print.log", `user not found at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`Cart with ID ${cartId} not found`));
@@ -257,11 +266,26 @@ class cartController {
                 }
 
                 // Reduce the stock of the book
+                totalPages += bookItem.pages * quantity;
                 bookItem.stock -= quantity;
                 await bookItem.save();
 
+            } 
+            let deliveryCharge;
+            if (totalPages > 12000) {
+                return res.status(400).send(failure("Delivery amount not possible"));
+                
+            } else if (totalPages > 10000) {
+                deliveryCharge = 200;
+            } else if (totalPages > 5000) {
+                deliveryCharge = 150;
+            } else if (totalPages > 2000) {
+                deliveryCharge = 120;
+            } else {
+                deliveryCharge = 80;
             }
-            const total = transactionItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+            const total = transactionItems.reduce((acc, item) => acc + item.price * item.quantity, 0) + deliveryCharge;
             console.log("transactionItems", transactionItems)
             // console.log("decodedToken", transactionItems)
             const user = await userModel.findOne({ email: decodedToken.email });
@@ -309,13 +333,12 @@ class cartController {
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
-
     async showCart(req, res) {
         try {
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
 
-            console.log("decodedToken",decodedToken)
+            console.log("decodedToken", decodedToken)
             if (!decodedToken.id.cartId) {
                 fs.appendFile("../server/print.log", `no cart to show at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`You don't have any cart`));
@@ -351,8 +374,8 @@ class cartController {
         try {
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
-            const user = await userModel.findOne({email:decodedToken.id.email});
-            console.log("decodedToken",decodedToken)
+            const user = await userModel.findOne({ email: decodedToken.id.email });
+            console.log("decodedToken", decodedToken)
             if (!user.transactionId) {
                 fs.appendFile("../server/print.log", `user not found at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`You don't have any transaction`));
@@ -378,20 +401,20 @@ class cartController {
     async showAllTransaction(req, res) {
         try {
 
-                // Find all transactions in the transactionModel
-                const transactions = await transactionModel.find()
-                    .populate({
-                        path: 'userId',
-                        select: 'name' // Only populate the 'name' field from the 'userId' reference
-                    })
-                    .populate({
-                        path: 'cartId',
-                        select: 'total' // Only populate the 'total' field from the 'cartId' reference
-                    });
-        
-                // Return the populated transactions
-                fs.appendFile("../server/print.log", `show transaction success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
-                return res.status(200).send(success("All transactions retrieved", { Transactions: transactions }));
+            // Find all transactions in the transactionModel
+            const transactions = await transactionModel.find()
+                .populate({
+                    path: 'userId',
+                    select: 'name' // Only populate the 'name' field from the 'userId' reference
+                })
+                .populate({
+                    path: 'cartId',
+                    select: 'total' // Only populate the 'total' field from the 'cartId' reference
+                });
+
+            // Return the populated transactions
+            fs.appendFile("../server/print.log", `show transaction success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            return res.status(200).send(success("All transactions retrieved", { Transactions: transactions }));
 
         }
         catch (error) {
@@ -403,27 +426,27 @@ class cartController {
     async cancelOrder(req, res) {
         try {
             // const { transactionId } = req.body; // Assuming you have a request body with transactionId
-    
+
             // Find the transaction by transactionId
-            
+
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
-            const user = await userModel.findOne({email:decodedToken.email});
+            const user = await userModel.findOne({ email: decodedToken.email });
             const transaction = await transactionModel.findById(user.transactionId);
 
-            console.log("decodedToken",decodedToken)
-    
+            console.log("decodedToken", decodedToken)
+
             if (!transaction) {
                 return res.status(404).send(failure(`Transaction not found`));
             }
-    
+
             // Get the timestamp of the transaction's createdAt field
             const transactionTimestamp = new Date(transaction.createdAt);
-    
+
             // Calculate the time difference in milliseconds
             const currentTime = new Date();
             const timeDifference = currentTime - transactionTimestamp;
-    
+
             // Check if the time difference is less than 5 minutes (300,000 milliseconds)
             if (timeDifference < 300000) {
                 const resultTran = await transactionModel.findByIdAndDelete(transaction._id)
@@ -432,17 +455,17 @@ class cartController {
                     user.transactionId = undefined;
                     await user.save();
                 }
-  
+
                 return res.status(200).send(success("Transaction canceled successfully"));
             } else {
                 // Deduct 100 taka 
                 const user = await userModel.findById(transaction.userId);
                 const resultTran = await transactionModel.findByIdAndDelete(transaction._id);
-    
+
                 if (!user) {
                     return res.status(404).send(failure(`User with ID not found`));
                 }
-    
+
                 if (user.balancedData < 100) {
                     user.userBlocked = true;
                     await user.save();
@@ -450,7 +473,7 @@ class cartController {
                 } else {
                     user.balancedData -= 100;
                     await user.save();
-    
+
                     return res.status(200).send(success("Transaction canceled and 100 taka deducted from your balance"));
                 }
             }
@@ -459,7 +482,7 @@ class cartController {
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
-    
+
 
 
 }
