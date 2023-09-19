@@ -21,6 +21,7 @@ routes.put("/updateselfuser",isAuthorised,isUser,userUpdateValidator,authenContr
 routes.delete("/deleteuser",isAuthorised,isAdmin,userUpdateValidator,authenController.deleteUser)
 routes.get("/getuser",isAuthorised,isAdmin,authenController.getUsers)
 routes.put("/addbalance",isAuthorised,isUser,balancedDataValidator,authenController.addBalance)
+routes.get("/showcart",isAuthorised,isUser,cartController.showCart)
 //BOOK
 routes.post("/addbook",isAuthorised,isAdmin,bookValidator,bookController.addBook)
 routes.put("/updatebook",isAuthorised,isAdmin,bookUpdateValidator,bookController.updateBook)

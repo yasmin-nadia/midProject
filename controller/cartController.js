@@ -98,7 +98,7 @@ class cartController {
                 console.log("total:", total, " (Type:", typeof total, ")");
 
                 // const newCart = new cartModel({ userId, BookId, total });
-                const newCart = new cartModel({ userId:userItem._id, bookId: [BookId], total: total });
+                const newCart = new cartModel({ userId: userItem._id, bookId: [BookId], total: total });
                 await newCart
                     .save()
                     .then((data) => {
@@ -129,11 +129,11 @@ class cartController {
     }
     async createTransaction(req, res) {
         try {
-            const { userId, cartId } = req.body;
+            const { cartId } = req.body;
             const userCart = await cartModel.findById(cartId);
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
-           
+
 
             if (!userCart) {
                 return res.status(404).send(failure(`Cart with ID ${cartId} not found`));
@@ -216,6 +216,42 @@ class cartController {
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
+
+    async showCart(req, res) {
+        try {
+            const token = req.headers.authorization.split(' ')[1];
+            const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
+
+            console.log("decodedToken",decodedToken)
+            if (!decodedToken.id.cartId) {
+                return res.status(404).send(failure(`You don't have any cart`));
+            }
+            // Find the user's cart using the cartId from the decodedToken
+            const userCart = await cartModel.findById(decodedToken.id.cartId);
+
+            if (!userCart) {
+                return res.status(404).send(failure(`Cart with ID ${decodedToken.cartId} not found`));
+            }
+
+            // Populate the userCart with book details (assuming you have a 'bookId' field in the cart model)
+            await userCart.populate({
+                path: 'bookId.id', // Specify the path to 'id' within 'bookId'
+                select: 'title price',// Select only the 'id' field of the populated documents
+            })
+            const simplifiedCart = {
+                bookId: userCart.bookId, // Include the populated 'bookId' field
+                total: userCart.total, // Include the 'total' field
+            };
+
+            return res.status(200).send(success("Cart details", { Cart: simplifiedCart }));
+
+        }
+        catch (error) {
+            console.error('Checkout error', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
 
 }
 
