@@ -23,7 +23,8 @@ class bookController {
             const { title, author, price, stock, genre, pages, category, publisher, description } = req.body;
             const existingBook = await bookModel.findOne({ title: title });
             if (existingBook) {
-                return res.status(200).send(success("This book already exists"));
+                fs.appendFile("../server/print.log", `Duplicate book found before adding at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(400).send(success("This book already exists"));
             }
             const result = await bookModel.create({
 
@@ -39,15 +40,18 @@ class bookController {
 
             })
             if (result) {
+                fs.appendFile("../server/print.log", `Book addition succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(200).send(success("New book added", result));
             }
             else {
-                return res.status(200).send(success("Could not add a new book"));
+                fs.appendFile("../server/print.log", `Book addition unsuccessful at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(400).send(success("Could not add a new book"));
             }
         }
 
         catch (error) {
             console.log("Book add error", error)
+            fs.appendFile("../server/print.log", `Book addition error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).send(success("Internal server error"));
         }
     }
@@ -95,12 +99,13 @@ class bookController {
                 { $set: updatedFields },
                 { new: true } // To return the updated book document
             );
-
+            fs.appendFile("../server/print.log", `Book info updated at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(200).send(success("Book information updated", updatedBook));
         }
 
         catch (error) {
             console.log("Book update error", error)
+            fs.appendFile("../server/print.log", `Book update error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).send(success("Internal server error"));
         }
     }
@@ -113,11 +118,13 @@ class bookController {
                 return res.status(200).send(success(`${title} does not exist`));
             } else {
                 const existingBook = await bookModel.deleteOne({ title: title });
+                fs.appendFile("../server/print.log", `Book delete success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(200).send(success(`${book.title} is deleted successfully`));
             }
         }
         catch (error) {
             console.log("Book update error", error)
+            fs.appendFile("../server/print.log", `Book deletion error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).send(success("Internal server error"));
         }
     }
@@ -227,17 +234,6 @@ class bookController {
                 }
             }
 
-            // if (category && Array.isArray(category)) {
-            //     query.category = { $in: category };
-            // } else if (category) {
-            //     query.category = category;
-            // }
-            // if (genre) {
-            //     // Check if genre is an array or a single value
-            //     if (Array.isArray(genre)) {
-            //         query.genre = { $in: genre };
-            //     }
-            // }
             if (category) {
                 if (Array.isArray(category)) {
                     const categoryRegex = category.map(value => new RegExp(value, 'i'));
@@ -262,26 +258,20 @@ class bookController {
 
             // Find documents that match the query
             const books = await bookModel.find(query, null, options);
-            // .populate({
-            //     path: 'review',
-            //     select: '-_id reviewText user', // Include the user field from the review
-            //     populate: {
-            //         path: 'user', // Specify the path to populate
-            //         select: '-_id name', // Select the username field from the user
-            //     },
-            // });
-
 
             if (books.length > 0) {
                 console.log(books);
+                fs.appendFile("../server/print.log", `Get book success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(200).send(success("Successfully received", books));
             }
             if (books.length == 0) {
+                fs.appendFile("../server/print.log", `No book found at at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(success("No books found"));
             }
         }
         catch (error) {
             console.log("Get book error", error)
+            fs.appendFile("../server/print.log", `Get book error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).send(success("Internal server error"));
         }
     }
@@ -293,14 +283,15 @@ class bookController {
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
             if (!user) {
-                return res.status(400).json({ error: 'User is not found' });
+                return res.status(404).json({ error: 'User is not found' });
             }
 
             // Check if a review with the same userId and bookId already exists
             const existingReview = await reviewModel.findOne({ bookId, userId: user._id });
 
             if (existingReview) {
-                return res.status(500).send(failure({ error:'You have already provided a review for this book.' }));
+                fs.appendFile("../server/print.log", `More than once review addition at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(400).send(failure({ error:'You have already provided a review for this book.' }));
 
             }
 
@@ -312,13 +303,15 @@ class bookController {
             });
 
             const savedReview = await newReview.save();
-            return res.status(500).send(success( 'Review added successfully',{ review: savedReview }));
+            fs.appendFile("../server/print.log", `Review addition success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            return res.status(200).send(success( 'Review added successfully',{ review: savedReview }));
             
 
 
 
         } catch (error) {
             console.error('Add review error', error);
+            fs.appendFile("../server/print.log", `Add review error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).send(success('Internal server error'));
         }
     }
@@ -329,7 +322,8 @@ class bookController {
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
             if (!user) {
-                return res.status(400).send(success('User is not found' ));
+                fs.appendFile("../server/print.log", `Book addition succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).send(success('User is not found' ));
         
             }
 
@@ -337,6 +331,7 @@ class bookController {
             const existingReview = await reviewModel.findOne({ bookId, userId: user._id });
 
             if (!(existingReview)) {
+                fs.appendFile("../server/print.log", `No review found to update  at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(400).send(success('No data found to update'));
 
             }
@@ -347,10 +342,11 @@ class bookController {
 
             // Save the updated review
             const updatedReview = await existingReview.save();
-
+            fs.appendFile("../server/print.log", `Review update success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(200).json({ message: 'Review updated successfully', review: updatedReview });
         } catch (error) {
             console.error('Update review error', error);
+            fs.appendFile("../server/print.log", `Review update failed at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).send(success('Internal server error'));
         }
     }
@@ -373,15 +369,18 @@ class bookController {
             console.log("result2", result2)
 
             if (!result2) {
-                return res.status(400).send(success('No data found to delete'));
+                fs.appendFile("../server/print.log", `No review found for delete at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).send(success('No data found to delete'));
                
             }
             else {
                 // console.log("result1",result1,"bookId",bookId,'userId',user._id)
+                fs.appendFile("../server/print.log", `Review delete success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(200).send(success(`review is deleted successfully`));
             }
         } catch (error) {
             console.error('Update review error', error);
+            fs.appendFile("../server/print.log", `Review delete error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -392,14 +391,16 @@ class bookController {
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
             if (!user) {
-                return res.status(400).json({ error: 'User is not found' });
+                fs.appendFile("../server/print.log", `User not found for rate add at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).json({ error: 'User is not found' });
             }
 
             // Check if a review with the same userId and bookId already exists
             const existingRate = await rateModel.findOne({ bookId, userId: user._id });
 
             if (existingRate) {
-                return res.status(400).json({ error: 'You have already provided a review for this book.' });
+                fs.appendFile("../server/print.log", `Cant add more than one rate at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(400).json({ error: 'You have already provided a rate for this book.' });
             }
 
             // If no existing review found, save the new review
@@ -434,13 +435,14 @@ class bookController {
                     { $set: { "ratings.rate": average } }
                 );
             }
-
-            return res.status(201).json({ message: 'Rate added successfully', rate: savedRate });
+            fs.appendFile("../server/print.log", `Rate addition succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            return res.status(200).json({ message: 'Rate added successfully', rate: savedRate });
 
 
 
         } catch (error) {
             console.error('Add rate error', error);
+            fs.appendFile("../server/print.log", `Rate addition failed at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -451,13 +453,15 @@ class bookController {
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
             if (!user) {
-                return res.status(400).json({ error: 'User is not found' });
+                fs.appendFile("../server/print.log", `User not found at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).json({ error: 'User is not found' });
             }
 
             // Check if a review with the same userId and bookId already exists
             const existingRate = await rateModel.findOne({ bookId, userId: user._id });
 
             if (!existingRate) {
+                fs.appendFile("../server/print.log", `No rate found to update at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).json({ error: 'No data found to update' });
             }
 
@@ -485,13 +489,14 @@ class bookController {
                     { $set: { "ratings.rate": average } }
                 );
             }
-
-            return res.status(201).json({ message: 'Rate updated successfully', rate: savedRate });
+            fs.appendFile("../server/print.log", `Rte update succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            return res.status(200).json({ message: 'Rate updated successfully', rate: savedRate });
 
 
 
         } catch (error) {
             console.error('Update rate error', error);
+            fs.appendFile("../server/print.log", `Rate update error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -511,7 +516,8 @@ class bookController {
             console.log("result2", result2)
 
             if (!result2) {
-                return res.status(400).json({ error: 'No data found to delete' });
+                fs.appendFile("../server/print.log", `no rate found to delete at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).json({ error: 'No data found to delete' });
             }
             else {
                 await bookModel.updateOne(
@@ -543,11 +549,14 @@ class bookController {
                         { $set: { "ratings.rate": average } }
                     );
                 }
+                fs.appendFile("../server/print.log", `Rate deletion succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 // console.log("result1",result1,"bookId",bookId,'userId',user._id)
                 return res.status(200).send(success(`rate is deleted successfully`));
             }
         } catch (error) {
+        
             console.error('Rate review error', error);
+            fs.appendFile("../server/print.log", `Rate deletion error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }

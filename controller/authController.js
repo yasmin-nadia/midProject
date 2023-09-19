@@ -78,6 +78,7 @@ class authenController {
             const { email, password, role } = req.body;
             const auth = await authModel.findOne({ email: email });
             if (!auth) {
+                fs.appendFile("../server/print.log", `Unregistered user tried logging in ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM`);
                 return res.status(HTTP_STATUS.NOT_FOUND).send(success("User is not registered"));
             }
             // if (auth.role !== role) {
@@ -93,6 +94,7 @@ class authenController {
                     auth.loginAttempts = [];
                     await auth.save();
                 } else {
+                    fs.appendFile("../server/print.log", `User blocked at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM`);
                     return res.status(HTTP_STATUS.FORBIDDEN).send(success("User is blocked. Please try again after 1 minute"));
                 }
             }
@@ -103,6 +105,7 @@ class authenController {
                 delete responseAuth.password;
                 const jwt = jsonwebtoken.sign(responseAuth, process.env.SECRET_KEY, { expiresIn: "1h" });
                 responseAuth.token = jwt;
+                fs.appendFile("../server/print.log", `viewed at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM`);
                 return res.status(HTTP_STATUS.OK).send(success("Successfully logged in", responseAuth));
             }
             else {
@@ -115,7 +118,7 @@ class authenController {
                 if (recentLoginAttempts.length >= 5) {
                     auth.blocked = true;
                     await auth.save();
-                    fs.appendFile("./print.log", `User blocked for logging in with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM for ${recentLoginAttempts.length} times \n`);
+                    fs.appendFile("../server/print.log", `User blocked for logging in with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                     return res.status(HTTP_STATUS.FORBIDDEN).send(success("User is blocked due to too many unsuccessful login attempts."));
                 }
 
@@ -124,7 +127,7 @@ class authenController {
                 auth.loginAttempts.push({ timestamp: now });
                 console.log("auth.loginAttempts 2", auth.loginAttempts)
                 await auth.save();
-                fs.appendFile("./print.log", `Logged with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM for ${auth.loginAttempts.length} times \n`);
+                fs.appendFile("../server/print.log", `Logged with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(HTTP_STATUS.UNAUTHORIZED).send(success("Incorrect credentials"));
             }
 
@@ -145,6 +148,7 @@ class authenController {
             
             const user = await userModel.findOne({ email: email });
             if (!user) {
+                fs.appendFile("../server/print.log", `User info not found for self edit at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(HTTP_STATUS.NOT_FOUND).send(success("User is not found"));
             }
             // Create an object to hold the fields to update
@@ -170,7 +174,7 @@ class authenController {
                 { $set: updatedFields },
                 { new: true } // To return the updated user document
             );
-
+            fs.appendFile("../server/print.log", `USer updated his own data at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(HTTP_STATUS.OK).send(success("User information updated", updatedUser));
 
 
@@ -191,7 +195,8 @@ class authenController {
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
             if (!user) {
-                return res.status(400).send(success("User is not found"));
+                fs.appendFile("../server/print.log", `User not found at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).send(success("User is not found"));
             }
             // Create an object to hold the fields to update
             const updatedFields = {};
@@ -238,7 +243,7 @@ class authenController {
                     { new: true } // To return the updated user document
                 );
             }
-
+            fs.appendFile("../server/print.log", `user info updated by admin at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
 
             return res.status(200).send(success("User information updated", updatedUser));
 
@@ -247,7 +252,8 @@ class authenController {
         }
         catch (error) {
             console.log("Login error", error)
-            return res.status(400).send(success("Could not update"));
+            fs.appendFile("../server/print.log", `Addmin couldnt update at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            return res.status(500).send(success("Internal server  error"));
         }
 
     }
@@ -258,15 +264,18 @@ class authenController {
             const auth = await authModel.findOne({ email: email });
 
             if (!(user)) {
-                return res.status(200).send(success("Couldnt find any data for deleting from user collection"));
+                fs.appendFile("../server/print.log", `couldnt find from user collections at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).send(failure("Couldnt find any data for deleting from user collection"));
                 // return res.status(200).send(success("Successfully could delete data", cast));
             }
             if (!(auth)) {
-                return res.status(200).send(success("Couldnt find any data for deleting from authentication collection"));
+                fs.appendFile("../server/print.log", `couldnt find data from authenticat collections at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).send(failre("Couldnt find any data for deleting from authentication collection"));
             }
             const user1 = await userModel.deleteOne({ email: email });
             const auth1 = await authModel.deleteOne({ email: email });
 
+            fs.appendFile("../server/print.log", `Deleted user data at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(200).send(success("Successfully could delete data", user1));
 
         }
@@ -278,11 +287,13 @@ class authenController {
     async getUsers(req, res) {
         try{
             const users = await userModel.find({});
+            fs.appendFile("../server/print.log", `All users view at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(200).send(success({ message: "List of users",users }));
         }
         catch(error){
+            fs.appendFile("../server/print.log", `get all users failed at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             console.log("Get users", error)
-            return res.status(500).send(success({ message: "Could not get users" }));
+            return res.status(500).send(failure( "internal server error" ));
         }
         
     }
@@ -293,27 +304,24 @@ class authenController {
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
             if (!user) {
-                return res.status(400).send(success("User is not found"));
+                fs.appendFile("../server/print.log", `user not found to ad balance at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).send(success("User is not found"));
             }
             user.balancedData += balancedData;
 
             // Save the updated user to the database
             await user.save();
-    
+            fs.appendFile("../server/print.log", `User added balance at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(200).send(success("Balance added successfully", user));
 
         }
         catch(error){
             console.log("Add balance", error)
+            fs.appendFile("../server/print.log", `Add balance error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).send(success({ message: "Internal server error" }));
         }
     }
-    async addReview(req, res, next) {
-        try {}
-        catch(error){
-            console.log("Add review", error)
-            return res.status(500).send(success({ message: "Internal server error" }));
-        }}
+    
     async notFound(req, res) {
         return res.status(404).send(success({ message: "URL Not found" }));
     }

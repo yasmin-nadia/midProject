@@ -31,6 +31,7 @@ class cartController {
             // const userItem = await userModel.findById(userId);
             let cartItem;
             if (!userItem) {
+                fs.appendFile("../server/print.log", `user not found for adding cart at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`User with ID ${userId} not found`));
             }
             cartItem = await cartModel.findById(userItem.cartId);
@@ -59,6 +60,7 @@ class cartController {
             }
 
             if (bookItem.stock < BookId.quantity) {
+                fs.appendFile("../server/print.log", `cart add failed for imsufficient stock at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(400).send(failure(`Insufficient stock for book ${bookItem.title}`));
             }
 
@@ -119,10 +121,12 @@ class cartController {
                     .then((data) => {
                         userItem.cartId = data._id;
                         userItem.save();
+                        fs.appendFile("../server/print.log", `cart create succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                         return res.status(200).send(success("One cart has been created", { Transaction: data }));
                     })
                     .catch((err) => {
                         console.log(err);
+                        fs.appendFile("../server/print.log", `Cart create failed at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                         return res.status(500).send(failure("Failed to add the cart"));
                     });
             } else {
@@ -130,6 +134,7 @@ class cartController {
                 await cartItem
                     .save()
                     .then((data) => {
+                        fs.appendFile("../server/print.log", `cart update succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                         return res.status(200).send(success("Existing cart updated", { Transaction: data }));
                     })
                     .catch((err) => {
@@ -139,6 +144,7 @@ class cartController {
             }
         } catch (error) {
             console.error('Add cart error', error);
+            fs.appendFile("../server/print.log", `Add cart error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -153,11 +159,13 @@ class cartController {
             // const result2 = await rateModel.findOne({ bookId, userId: userIdAsString });
             // const userItem = await userModel.findById(userId);
             if (!userItem) {
+                fs.appendFile("../server/print.log", `User not found for removing cart at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`User with ID ${decodedToken._id} not found`));
             }
             const cartItem = await cartModel.findById(userItem.cartId);
 
             if (!cartItem) {
+                fs.appendFile("../server/print.log", `User has no cart at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`Cart for user not found`));
             }
     
@@ -166,6 +174,7 @@ class cartController {
                 cartBook.id.equals(BookId)
             );
             if (bookIndexToRemove === -1) {
+                fs.appendFile("../server/print.log", `Index error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`Book with ID ${BookId} not found in the cart`));
             }
     const removedBook = cartItem.bookId[bookIndexToRemove];
@@ -193,7 +202,7 @@ class cartController {
     
             // Save the updated cart
             await cartItem.save();
-    
+            fs.appendFile("../server/print.log", `Book removed from cart at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(200).send(success("Book removed from the cart", { Cart: cartItem }));
         } catch (error) {
             console.error('Add cart error', error);
@@ -209,11 +218,13 @@ class cartController {
 
 
             if (!userCart) {
+                fs.appendFile("../server/print.log", `user not found at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`Cart with ID ${cartId} not found`));
             }
             else {
                 if ((userCart.checked)) {
-                    return res.status(200).send(failure(`You order is on the way`));
+                    fs.appendFile("../server/print.log", `clicked checkout multiple times at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                    return res.status(400).send(failure(`You order is on the way`));
                 }
             }
             const transactionItems = [];
@@ -227,10 +238,12 @@ class cartController {
                 const bookItem = await bookModel.findById(bookId);
 
                 if (!bookItem) {
+                    fs.appendFile("../server/print.log", `Book not found at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                     return res.status(404).send(failure(`Book with ID ${bookId} not found`));
                 }
 
                 if (bookItem.stock < quantity) {
+                    fs.appendFile("../server/print.log", `stock insufficient for checkout at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                     return res.status(400).send(failure(`Insufficient stock for book ${bookItem.title}`));
                 }
                 if (bookItem.discount) {
@@ -255,11 +268,13 @@ class cartController {
 
 
             if (!user) {
+                fs.appendFile("../server/print.log", `user not found at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`User with ID ${decodedToken._id} not found`));
             }
 
             // Check if the total is greater than or equal to user.balance
             if (total > user.balancedData) {
+                fs.appendFile("../server/print.log", `Insufficient balance for checkout at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(400).send(failure(`Empty balance. Please add balance`));
             }
             // Create a new transaction with the items
@@ -279,10 +294,12 @@ class cartController {
                     user.transactionId = newTransaction._id;
                     user.balancedData -= total; // Subtract the transaction total from the user's balance
                     user.save();
+                    fs.appendFile("../server/print.log", `transaction created at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                     return res.status(200).send(success("One transaction has been created", { Transaction: data }));
                 })
                 .catch((err) => {
                     console.log(err);
+                    fs.appendFile("../server/print.log", `transaction creation failed at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                     return res.status(500).send(failure("Failed to add the transaction"));
                 });
         }
@@ -299,12 +316,14 @@ class cartController {
 
             console.log("decodedToken",decodedToken)
             if (!decodedToken.id.cartId) {
+                fs.appendFile("../server/print.log", `no cart to show at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`You don't have any cart`));
             }
             // Find the user's cart using the cartId from the decodedToken
             const userCart = await cartModel.findById(decodedToken.id.cartId);
 
             if (!userCart) {
+                fs.appendFile("../server/print.log", `no user for cart to show at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`Cart with ID ${decodedToken.cartId} not found`));
             }
 
@@ -317,12 +336,13 @@ class cartController {
                 bookId: userCart.bookId, // Include the populated 'bookId' field
                 total: userCart.total, // Include the 'total' field
             };
-
+            fs.appendFile("../server/print.log", `show cart succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(200).send(success("Cart details", { Cart: simplifiedCart }));
 
         }
         catch (error) {
             console.error('Checkout error', error);
+            fs.appendFile("../server/print.log", `show cart error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -333,25 +353,53 @@ class cartController {
             const user = await userModel.findOne({email:decodedToken.id.email});
             console.log("decodedToken",decodedToken)
             if (!user.transactionId) {
+                fs.appendFile("../server/print.log", `user not found at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`You don't have any transaction`));
             }
             // Find the user's cart using the cartId from the decodedToken
             const userTransaction = await transactionModel.findById(user.transactionId);
 
             if (!userTransaction) {
+                fs.appendFile("../server/print.log", `cart not found at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(failure(`Cart with ID ${user.transactionId} not found`));
             }
 
-
+            fs.appendFile("../server/print.log", `show cart success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(200).send(success("Cart details", { Transaction: userTransaction }));
 
         }
         catch (error) {
             console.error('Checkout error', error);
+            fs.appendFile("../server/print.log", `show cart error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
     async showAllTransaction(req, res) {
+        try {
+
+                // Find all transactions in the transactionModel
+                const transactions = await transactionModel.find()
+                    .populate({
+                        path: 'userId',
+                        select: 'name' // Only populate the 'name' field from the 'userId' reference
+                    })
+                    .populate({
+                        path: 'cartId',
+                        select: 'total' // Only populate the 'total' field from the 'cartId' reference
+                    });
+        
+                // Return the populated transactions
+                fs.appendFile("../server/print.log", `show transaction success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(200).send(success("All transactions retrieved", { Transactions: transactions }));
+
+        }
+        catch (error) {
+            console.error('Checkout error', error);
+            fs.appendFile("../server/print.log", `show transaction error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+    async cancelOrder(req, res) {
         try {
 
                 // Find all transactions in the transactionModel
