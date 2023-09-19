@@ -10,7 +10,7 @@ const databaseConnection = require("./database");
 const discountModel = require("./model/discounts");
 const bookModel = require("./model/book");
 const mongoose = require("mongoose"); // Import mongoose
-const HTTP_STATUS = require("../constants/statusCodes");
+const HTTP_STATUS = require("./constants/statusCodes");
 dotenv.config();
 app.use(express.json());
 app.use(express.text());

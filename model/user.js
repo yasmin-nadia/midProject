@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: "carts",
     },
+    transactionId: {
+        type: mongoose.Types.ObjectId,
+        ref: "transactions",
+    },
     userblocked:{
         type:Boolean,
         default:false

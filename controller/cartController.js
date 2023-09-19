@@ -33,8 +33,23 @@ class cartController {
             if (!userItem) {
                 return res.status(404).send(failure(`User with ID ${userId} not found`));
             }
+            cartItem = await cartModel.findById(userItem.cartId);
+            //if prev cart is checked and user trying to add new cart then delete prev cart
+            if (cartItem) {
+                console.log("cartItem", cartItem);
+    
+                // Check if cart.checked is true
+                if (cartItem.checked) {
+                    // Delete the cart from cartModel
+                    await cartModel.findByIdAndDelete(userItem.cartId);
+                    
+                    // Clear userItem.cartId
+                    userItem.cartId = undefined;
+                    await userItem.save();
+    
+                    // return res.status(200).send(success("Cart deleted as it is checked"));
+                }}
 
-            console.log("userItem", userItem);
             let flag = false;
 
             const bookItem = await bookModel.findById(BookId.id);
@@ -44,7 +59,7 @@ class cartController {
             }
 
             if (bookItem.stock < BookId.quantity) {
-                return res.status(200).send(failure(`Insufficient stock for book ${bookItem.title}`));
+                return res.status(400).send(failure(`Insufficient stock for book ${bookItem.title}`));
             }
 
             cartItem = await cartModel.findById(userItem.cartId);
@@ -127,6 +142,64 @@ class cartController {
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
+    async removeFromCart(req, res) {
+        try {
+            const { BookId } = req.body;
+            const token = req.headers.authorization.split(' ')[1];
+            const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
+            const userItem = await userModel.findOne({ email: decodedToken.email });
+            // console.log("decodedToken", decodedToken)
+            // const userIdAsString = user._id.toString();
+            // const result2 = await rateModel.findOne({ bookId, userId: userIdAsString });
+            // const userItem = await userModel.findById(userId);
+            if (!userItem) {
+                return res.status(404).send(failure(`User with ID ${decodedToken._id} not found`));
+            }
+            const cartItem = await cartModel.findById(userItem.cartId);
+
+            if (!cartItem) {
+                return res.status(404).send(failure(`Cart for user not found`));
+            }
+    
+            // Find the index of the book to be removed in the cart's bookId array
+            const bookIndexToRemove = cartItem.bookId.findIndex((cartBook) =>
+                cartBook.id.equals(BookId)
+            );
+            if (bookIndexToRemove === -1) {
+                return res.status(404).send(failure(`Book with ID ${BookId} not found in the cart`));
+            }
+    const removedBook = cartItem.bookId[bookIndexToRemove];
+            let amountToSubtract = 0;
+
+            // Check if the removed book has a discount
+            const bookItem = await bookModel.findById(removedBook.id);
+    
+            if (bookItem) {
+                if (bookItem.discount) {
+                    // Calculate the discounted price
+                    amountToSubtract = bookItem.discountedPrice * removedBook.quantity;
+                } else {
+                    // Use regular price if no discount
+                    amountToSubtract = bookItem.price * removedBook.quantity;
+                }
+            }
+    
+            // Subtract the amount from the cart's total
+            cartItem.total -= amountToSubtract;
+    
+            // Remove the book from the cart's bookId array
+            cartItem.bookId.splice(bookIndexToRemove, 1);
+
+    
+            // Save the updated cart
+            await cartItem.save();
+    
+            return res.status(200).send(success("Book removed from the cart", { Cart: cartItem }));
+        } catch (error) {
+            console.error('Add cart error', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
     async createTransaction(req, res) {
         try {
             const { cartId } = req.body;
@@ -177,6 +250,7 @@ class cartController {
             }
             const total = transactionItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
             console.log("transactionItems", transactionItems)
+            // console.log("decodedToken", transactionItems)
             const user = await userModel.findOne({ email: decodedToken.email });
 
 
@@ -190,7 +264,7 @@ class cartController {
             }
             // Create a new transaction with the items
             const newTransaction = new transactionModel({
-                userId: decodedToken._id,
+                userId: user._id,
                 cartId: userCart._id,
                 total: total
             });
@@ -202,6 +276,7 @@ class cartController {
             await userCart.save();
             await newTransaction.save()
                 .then((data) => {
+                    user.transactionId = newTransaction._id;
                     user.balancedData -= total; // Subtract the transaction total from the user's balance
                     user.save();
                     return res.status(200).send(success("One transaction has been created", { Transaction: data }));
@@ -251,6 +326,55 @@ class cartController {
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
+    async showTransaction(req, res) {
+        try {
+            const token = req.headers.authorization.split(' ')[1];
+            const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
+            const user = await userModel.findOne({email:decodedToken.id.email});
+            console.log("decodedToken",decodedToken)
+            if (!user.transactionId) {
+                return res.status(404).send(failure(`You don't have any transaction`));
+            }
+            // Find the user's cart using the cartId from the decodedToken
+            const userTransaction = await transactionModel.findById(user.transactionId);
+
+            if (!userTransaction) {
+                return res.status(404).send(failure(`Cart with ID ${user.transactionId} not found`));
+            }
+
+
+            return res.status(200).send(success("Cart details", { Transaction: userTransaction }));
+
+        }
+        catch (error) {
+            console.error('Checkout error', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+    async showAllTransaction(req, res) {
+        try {
+
+                // Find all transactions in the transactionModel
+                const transactions = await transactionModel.find()
+                    .populate({
+                        path: 'userId',
+                        select: 'name' // Only populate the 'name' field from the 'userId' reference
+                    })
+                    .populate({
+                        path: 'cartId',
+                        select: 'total' // Only populate the 'total' field from the 'cartId' reference
+                    });
+        
+                // Return the populated transactions
+                return res.status(200).send(success("All transactions retrieved", { Transactions: transactions }));
+
+        }
+        catch (error) {
+            console.error('Checkout error', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
 
 
 }

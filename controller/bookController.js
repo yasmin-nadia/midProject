@@ -173,21 +173,23 @@ class bookController {
                     $lte: parseFloat(priceUpperBound),
                 };
             }
+            if (query.ratings) {
+                if (rate && (rateFlow === 'upper' || rateFlow === 'lower')) {
+                    if (rateFlow === 'upper') {
+                        query.ratings.rate = { $gte: parseFloat(rate) };
+                    } else {
+                        query.ratings.rate = { $lte: parseFloat(rate) };
+                    }
 
-            if (rate && (rateFlow === 'upper' || rateFlow === 'lower')) {
 
-                if (rateFlow === 'upper') {
-                    query.rate = { $gte: parseFloat(rate) };
-                } else {
-                    query.rate = { $lte: parseFloat(price) };
                 }
-
-
-            }
-            else if (rate) {
-                query.rate = {
-                    $eq: parseFloat(rate)
-                };
+                else if (rate) {
+                    console.log("2rate", rate)
+                    console.log("2query.ratings.rate", query.ratings ? query.ratings.rate : null);
+                    query.ratings.rate = {
+                        $eq: parseFloat(rate)
+                    };
+                }
             }
             if (pages && (pagesFlow === 'upper' || pagesFlow === 'lower')) {
 
@@ -298,7 +300,8 @@ class bookController {
             const existingReview = await reviewModel.findOne({ bookId, userId: user._id });
 
             if (existingReview) {
-                return res.status(400).json({ error: 'You have already provided a review for this book.' });
+                return res.status(500).send(failure({ error:'You have already provided a review for this book.' }));
+
             }
 
             // If no existing review found, save the new review
@@ -309,14 +312,14 @@ class bookController {
             });
 
             const savedReview = await newReview.save();
-
-            return res.status(201).json({ message: 'Review added successfully', review: savedReview });
+            return res.status(500).send(success( 'Review added successfully',{ review: savedReview }));
+            
 
 
 
         } catch (error) {
             console.error('Add review error', error);
-            return res.status(500).json({ error: 'Internal server error' });
+            return res.status(500).send(success('Internal server error'));
         }
     }
     async updateReview(req, res) {
@@ -326,14 +329,16 @@ class bookController {
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
             if (!user) {
-                return res.status(400).json({ error: 'User is not found' });
+                return res.status(400).send(success('User is not found' ));
+        
             }
 
             // Check if a review with the same userId and bookId already exists
             const existingReview = await reviewModel.findOne({ bookId, userId: user._id });
 
             if (!(existingReview)) {
-                return res.status(400).json({ error: 'No data found to update' });
+                return res.status(400).send(success('No data found to update'));
+
             }
 
             // If no existing review found, save the new review
@@ -346,7 +351,7 @@ class bookController {
             return res.status(200).json({ message: 'Review updated successfully', review: updatedReview });
         } catch (error) {
             console.error('Update review error', error);
-            return res.status(500).json({ error: 'Internal server error' });
+            return res.status(500).send(success('Internal server error'));
         }
     }
     async deleteReview(req, res) {
@@ -368,7 +373,8 @@ class bookController {
             console.log("result2", result2)
 
             if (!result2) {
-                return res.status(400).json({ error: 'No data found to delete' });
+                return res.status(400).send(success('No data found to delete'));
+               
             }
             else {
                 // console.log("result1",result1,"bookId",bookId,'userId',user._id)

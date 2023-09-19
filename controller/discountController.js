@@ -63,6 +63,43 @@ class discountController {
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
+    async updateDiscount(req, res) {
+        try {
+            const { discountType ,startDate,endDate,percentage,valid} = req.body;
+    
+            // Check if the book exists
+            const discount = await discountModel.findOne({discountType:discountType});
+    
+            if (!discount) {
+                return res.status(404).send(failure(`Book with ID ${discountType} not found`));
+            }
+            if (startDate) {
+                discount.startDate = startDate;
+            }
+    
+            if (endDate) {
+                discount.endDate = endDate;
+            }
+    
+            if (percentage) {
+                discount.percentage = percentage;
+            }
+    
+            if (valid !== undefined) {
+                discount.valid = valid;
+            }
+    
+    
+            // Save the updated book
+            await discount.save();
+    
+            return res.status(200).send(success(`Discount updated of type ${discountType}`));
+        } 
+        catch (error) {
+            console.error('Update Discount error', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
 
     
 }

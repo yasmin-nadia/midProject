@@ -46,6 +46,27 @@ const cartValidator = (req, res, next) => {
         return res.status(500).json({ error: 'Internal server error.' });
     }
 }
+const cartRemoveValidator = (req, res, next) => {
+    try {
+        const { BookId } = req.body;
+        const message = [];
+        if (!mongoose.Types.ObjectId.isValid(BookId)) {
+            message.push("Invalid bookId");
+        }
+        
+        if (message.length > 0) {
+            return res.status(400).send(failure(message.join(", ")));
+        } else {
+            next();
+        }
+
+    }
+    catch (error) {
+        // Handle any other errors
+        console.error('Cart validation error:', error);
+        return res.status(500).json({ error: 'Internal server error.' });
+    }
+}
 
 const checkoutValidator = (req, res, next) => {
     try {
@@ -67,4 +88,4 @@ const checkoutValidator = (req, res, next) => {
         return res.status(500).json({ error: 'Internal server error.' });
     }
 }
-module.exports = { cartValidator,checkoutValidator };
+module.exports = { cartValidator,checkoutValidator,cartRemoveValidator };

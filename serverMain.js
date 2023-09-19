@@ -7,7 +7,7 @@ const cors=require("cors");
 const authenController = require("./controller/authController");
 const urlnotfound=require("./constants/urlnotfound");
 const databaseConnection=require("./database");
-
+const HTTP_STATUS = require("./constants/statusCodes");
 dotenv.config()
 app.use(express.json());
 app.use(express.text());

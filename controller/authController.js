@@ -19,13 +19,13 @@ class authenController {
             const validation = validationResult(req).array()
             console.log("validation", validation)
             if (validation.length > 0) {
-                return res.status(200).send(success("Failed to validate the data", validation));
+                return res.status(HTTP_STATUS.BAD_REQUEST).send(success("Failed to validate the data", validation));
             }
 
             const { email, password, name, phone, address, role } = req.body;
             const existingUser = await authModel.findOne({ email: email });
             if (existingUser) {
-                return res.status(200).send(success("Email is already registered"));
+                return res.status(HTTP_STATUS.OK).send(success("Email is already registered"));
             }
 
             console.log("password", password)
@@ -54,21 +54,21 @@ class authenController {
                 })
                 console.log("result2", result2)
                 if (!result2) {
-                    return res.status(200).send(success("Failed to store user information", result2));
+                    return res.status(HTTP_STATUS.BAD_REQUEST).send(success("Failed to store user information", result2));
                 }
                 console.log("result", result)
                 console.log("result2", result2)
-                return res.status(200).send(success("Authentication succeeded", result));
+                return res.status(HTTP_STATUS.OK).send(success("Authentication succeeded", result));
             }
             else {
-                return res.status(200).send(success("Authentication has not been succeeded"));
+                return res.status(HTTP_STATUS.OK).send(success("Authentication has not been succeeded"));
             }
 
 
         }
         catch (error) {
             console.log("The error is", error)
-            return res.status(400).send(success("Internal server error"));
+            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(success("Internal server error"));
         }
 
     }
@@ -78,7 +78,7 @@ class authenController {
             const { email, password, role } = req.body;
             const auth = await authModel.findOne({ email: email });
             if (!auth) {
-                return res.status(400).send(success("User is not registered"));
+                return res.status(HTTP_STATUS.NOT_FOUND).send(success("User is not registered"));
             }
             // if (auth.role !== role) {
             //     return res.status(400).send(success("Invalid Role"));
@@ -93,7 +93,7 @@ class authenController {
                     auth.loginAttempts = [];
                     await auth.save();
                 } else {
-                    return res.status(403).send(success("User is blocked. Please try again after 1 minute"));
+                    return res.status(HTTP_STATUS.FORBIDDEN).send(success("User is blocked. Please try again after 1 minute"));
                 }
             }
             const checkedPassword = await bcrypt.compare(password, auth.password)
@@ -103,7 +103,7 @@ class authenController {
                 delete responseAuth.password;
                 const jwt = jsonwebtoken.sign(responseAuth, process.env.SECRET_KEY, { expiresIn: "1h" });
                 responseAuth.token = jwt;
-                return res.status(200).send(success("Successfully logged in", responseAuth));
+                return res.status(HTTP_STATUS.OK).send(success("Successfully logged in", responseAuth));
             }
             else {
                 const now = moment();
@@ -116,7 +116,7 @@ class authenController {
                     auth.blocked = true;
                     await auth.save();
                     fs.appendFile("./print.log", `User blocked for logging in with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM for ${recentLoginAttempts.length} times \n`);
-                    return res.status(403).send(success("User is blocked due to too many unsuccessful login attempts."));
+                    return res.status(HTTP_STATUS.FORBIDDEN).send(success("User is blocked due to too many unsuccessful login attempts."));
                 }
 
                 auth.loginAttempts = recentLoginAttempts;
@@ -125,7 +125,7 @@ class authenController {
                 console.log("auth.loginAttempts 2", auth.loginAttempts)
                 await auth.save();
                 fs.appendFile("./print.log", `Logged with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM for ${auth.loginAttempts.length} times \n`);
-                return res.status(400).send(success("Incorrect credentials"));
+                return res.status(HTTP_STATUS.UNAUTHORIZED).send(success("Incorrect credentials"));
             }
 
 
@@ -133,7 +133,7 @@ class authenController {
         }
         catch (error) {
             console.log("Login error", error)
-            return res.status(400).send(success("Could not login"));
+            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(success("Could not login"));
         }
 
     }
@@ -142,9 +142,10 @@ class authenController {
         try {
 
             const { email, role, name, address, phone } = req.body;
+            
             const user = await userModel.findOne({ email: email });
             if (!user) {
-                return res.status(400).send(success("User is not found"));
+                return res.status(HTTP_STATUS.NOT_FOUND).send(success("User is not found"));
             }
             // Create an object to hold the fields to update
             const updatedFields = {};
@@ -170,14 +171,14 @@ class authenController {
                 { new: true } // To return the updated user document
             );
 
-            return res.status(200).send(success("User information updated", updatedUser));
+            return res.status(HTTP_STATUS.OK).send(success("User information updated", updatedUser));
 
 
 
         }
         catch (error) {
             console.log("Login error", error)
-            return res.status(400).send(success("Could not login"));
+            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(success("Internal Server Error"));
         }
 
     }

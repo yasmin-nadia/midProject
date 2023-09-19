@@ -83,7 +83,7 @@ const userValidator = (req, res, next) => {
                 "Karwan Bazar", "Jatrabari", "Kamrangirchar", "Puran Dhaka", "Baridhara",
                 "Niketon", "Basundhara", "Khilgaon"
             ];
-            
+
             if (typeof address !== 'object') {
                 message.push("Address must be an object");
             } else {
@@ -94,7 +94,7 @@ const userValidator = (req, res, next) => {
                 } else if (!areaNames.includes(address.area)) {
                     message.push("Delivery is not available in your area");
                 }
-                
+
                 if (!address.hasOwnProperty('streetAddress')) {
                     message.push("Address must have a 'streetAddress' property");
                 } else if (typeof address.streetAddress !== 'string') {
@@ -121,14 +121,14 @@ const userValidator = (req, res, next) => {
 
         }
         if (role) {
-            const validRoles=["admin","user"]
+            const validRoles = ["admin", "user"]
             if (typeof role !== 'string') {
                 message.push("Role must be a string");
             }
             else if (!validRoles.includes(role)) {
                 message.push("Invalid role");
             }
-            else if(role==="admin") {
+            else if (role === "admin") {
                 if (!(key)) {
                     message.push("You must provide 'key' for unlocking admin role");
                 }
@@ -162,7 +162,7 @@ const userValidator = (req, res, next) => {
 };
 const userUpdateValidator = (req, res, next) => {
     try {
-        const { email, name, password, address, phone,role } = req.body;
+        const { email, name, password, address, phone, role } = req.body;
         const message = [];
         if (name) {
             if (typeof name !== 'string') {
@@ -199,7 +199,7 @@ const userUpdateValidator = (req, res, next) => {
                 "Karwan Bazar", "Jatrabari", "Kamrangirchar", "Puran Dhaka", "Baridhara",
                 "Niketon", "Basundhara", "Khilgaon"
             ];
-            
+
             if (typeof address !== 'object') {
                 message.push("Address must be an object");
             } else {
@@ -210,7 +210,7 @@ const userUpdateValidator = (req, res, next) => {
                 } else if (!areaNames.includes(address.area)) {
                     message.push("Delivery is not available in your area");
                 }
-                
+
                 if (!address.hasOwnProperty('streetAddress')) {
                     message.push("Address must have a 'streetAddress' property");
                 } else if (typeof address.streetAddress !== 'string') {
@@ -218,8 +218,8 @@ const userUpdateValidator = (req, res, next) => {
                 }
             }
         }
-        if (phone){
-      
+        if (phone) {
+
             if (typeof phone !== 'string') {
                 message.push("Phone must be a string");
             } else {
@@ -231,12 +231,12 @@ const userUpdateValidator = (req, res, next) => {
             }
 
         }
-        if (role){
-      
+        if (role) {
+
             if (typeof role !== 'string') {
                 message.push("Role must be a string");
             } else {
-                const validRoles=["user","admin"]
+                const validRoles = ["user", "admin"]
 
                 if (!validRoles.includes(role)) {
                     message.push("Invalid role");
@@ -244,8 +244,11 @@ const userUpdateValidator = (req, res, next) => {
             }
 
         }
-        if (email){
-        
+        if (!(email)) {
+            message.push("Please provide an Email");
+
+        } else {
+
             if (typeof email !== 'string') {
                 message.push("Email must be a string");
             }
@@ -257,7 +260,7 @@ const userUpdateValidator = (req, res, next) => {
             }
 
         }
-        if (password){
+        if (password) {
             if (typeof password !== 'string') {
                 message.push("Password must be a string");
             } else {
@@ -273,19 +276,19 @@ const userUpdateValidator = (req, res, next) => {
 
         }
         if (role) {
-            const validRoles=["admin","user"]
+            const validRoles = ["admin", "user"]
             if (typeof role !== 'string') {
                 message.push("Role must be a string");
             }
             else if (!validRoles.includes(role)) {
                 message.push("Invalid role");
             }
-            
+
 
         }
 
         if (message.length > 0) {
-            return res.status(400).send(failure(message.join(", ")));
+            return res.status(HTTP_STATUS.BAD_REQUEST).send(failure(message.join(", ")));
         } else {
             next();
         }
@@ -298,9 +301,9 @@ const userUpdateValidator = (req, res, next) => {
 
 }
 const userLoginValidator = (req, res, next) => {
-    try{
-        const message=[]
-        const { email,password, role } = req.body;
+    try {
+        const message = []
+        const { email, password, role } = req.body;
         if (!(email)) {
             message.push("Please provide an Email");
         }
@@ -335,14 +338,14 @@ const userLoginValidator = (req, res, next) => {
 
         }
         if (role) {
-            const validRoles=["admin","user"]
+            const validRoles = ["admin", "user"]
             if (typeof role !== 'string') {
                 message.push("Role must be a string");
             }
             else if (!validRoles.includes(role)) {
                 message.push("Invalid role");
             }
-            
+
 
         }
         if (message.length > 0) {
@@ -378,4 +381,4 @@ const balancedDataValidator = (req, res, next) => {
 
 
 
-module.exports = { userValidator, userUpdateValidator,userLoginValidator,balancedDataValidator };
+module.exports = { userValidator, userUpdateValidator, userLoginValidator, balancedDataValidator };

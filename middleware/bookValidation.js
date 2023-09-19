@@ -226,14 +226,15 @@ const getBookValidator = (req, res, next) => {
         const response = {};
 
         // Validate limit
+        if(limit){
         if (!Number.isInteger(parseInt(limit)) || parseInt(limit) < 1 || parseInt(limit) > 20) {
             response.limit = "Invalid 'limit' parameter. It must be an integer between 1 and 20.";
-        }
-
+        }}
+if(page){
         // Validate page
         if (!Number.isInteger(parseInt(page)) || parseInt(page) < 1 || parseInt(page) > 20) {
             response.page = "Invalid 'page' parameter. It must be an integer between 1 and 20.";
-        }
+        }}
 
         // Validate priceFlow
         const validFlows = ["upper", "lower"];
@@ -321,7 +322,7 @@ const getBookValidator = (req, res, next) => {
 
         // Check if there are validation errors
         if (Object.keys(response).length > 0) {
-            return res.status(400).send({ errors: response });
+            return res.status(400).send(failure({response}));
         }
 
 
@@ -329,6 +330,7 @@ const getBookValidator = (req, res, next) => {
         next();
     } catch (error) {
         console.error("Error while validating query parameters", error);
+        
         return res.status(500).send(failure("Internal server error"));
     }
 };
