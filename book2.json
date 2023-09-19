@@ -4,7 +4,6 @@
         "author": "F. Scottish Fitzgerald",
         "price": 15.99,
         "stock": 100,
-        "discount": 10,
         "discountedprice": 11.69,
         "genre": [
             "Classic",
@@ -25,7 +24,7 @@
         "author": "Harper Lee",
         "price": 10.99,
         "stock": 30,
-        "discount": 15,
+
         "discountedprice": 9.34,
         "genre": [
             "Classic",
@@ -46,7 +45,7 @@
         "author": "F. Scott Fitzgerald",
         "price": 12.99,
         "stock": 50,
-        "discount": 10,
+
         "discountedprice": 11.69,
         "genre": [
             "Classic",
@@ -67,7 +66,7 @@
         "author": "Harper Lee",
         "price": 10.99,
         "stock": 30,
-        "discount": 15,
+
         "discountedprice": 9.34,
         "genre": [
             "Classic",
@@ -88,7 +87,7 @@
         "author": "George Orwell",
         "price": 9.99,
         "stock": 25,
-        "discount": 20,
+
         "discountedprice": 7.99,
         "genre": [
             "Dystopian",
@@ -109,7 +108,7 @@
         "author": "Jane Austen",
         "price": 11.99,
         "stock": 40,
-        "discount": 10,
+
         "discountedprice": 10.79,
         "genre": [
             "Romance",
@@ -131,7 +130,7 @@
         "author": "J.K. Rowling",
         "price": 14.99,
         "stock": 60,
-        "discount": 10,
+
         "discountedprice": 13.49,
         "genre": [
             "Fantasy",
@@ -152,7 +151,7 @@
         "author": "J.R.R. Tolkien",
         "price": 11.99,
         "stock": 45,
-        "discount": 15,
+
         "discountedprice": 10.19,
         "genre": [
             "Fantasy",
@@ -173,7 +172,7 @@
         "author": "J.D. Salinger",
         "price": 9.99,
         "stock": 35,
-        "discount": 10,
+
         "discountedprice": 8.99,
         "genre": [
             "Coming of Age",
@@ -194,7 +193,7 @@
         "author": "J.R.R. Tolkien",
         "price": 19.99,
         "stock": 28,
-        "discount": 15,
+
         "discountedprice": 16.99,
         "genre": [
             "Fantasy",
@@ -215,7 +214,7 @@
         "author": "Aldous Huxley",
         "price": 10.99,
         "stock": 20,
-        "discount": 10,
+
         "discountedprice": 9.89,
         "genre": [
             "Dystopian",
@@ -236,7 +235,7 @@
         "author": "Paulo Coelho",
         "price": 12.99,
         "stock": 42,
-        "discount": 10,
+
         "discountedprice": 11.69,
         "genre": [
             "Fiction",
@@ -257,7 +256,7 @@
         "author": "Herman Melville",
         "price": 13.99,
         "stock": 25,
-        "discount": 15,
+ 
         "discountedprice": 11.89,
         "genre": [
             "Adventure",
@@ -278,7 +277,7 @@
         "author": "Stephen King",
         "price": 11.99,
         "stock": 30,
-        "discount": 10,
+
         "discountedprice": 10.79,
         "genre": [
             "Horror",
@@ -299,7 +298,7 @@
         "author": "Cormac McCarthy",
         "price": 10.99,
         "stock": 38,
-        "discount": 10,
+
         "discountedprice": 9.89,
         "genre": [
             "Dystopian",
@@ -320,7 +319,7 @@
         "author": "Dan Brown",
         "price": 14.99,
         "stock": 22,
-        "discount": 10,
+
         "discountedprice": 13.49,
         "genre": [
             "Mystery",
@@ -341,7 +340,7 @@
         "author": "M. Scott Peck",
         "price": 12.99,
         "stock": 28,
-        "discount": 10,
+
         "discountedprice": 11.69,
         "genre": [
             "Self-Help",

@@ -19,7 +19,12 @@ const cartSchema = new mongoose.Schema({
     },],},
     
    total:{
-    type:Number
+    type:Number,
+    default:0
+   },
+   discountedTotal:{
+    type:Number,
+    default:0
    },
    checked:{
     type:Boolean,

@@ -18,8 +18,8 @@ const booksSchema = new mongoose.Schema({
         required: true,
     },
     discount: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'discounts',
+        type: mongoose.Types.ObjectId,
+        ref: "discounts",
     },
     discountedPrice: {
         type: Number,
