@@ -92,12 +92,12 @@ class discountController {
     
             // Save the updated book
             await discount.save();
-            fs.appendFile("../server/print.log", `discount update success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            fs.appendFile("../midProject/server/print.log", `discount update success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(200).send(success(`Discount updated of type ${discountType}`));
         } 
         catch (error) {
             console.error('Update Discount error', error);
-            fs.appendFile("../server/print.log", `Discpunt update error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            fs.appendFile("../midProject/server/print.log", `Discpunt update error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
