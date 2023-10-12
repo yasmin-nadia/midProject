@@ -22,7 +22,9 @@ const HTTP_STATUS = require("../constants/statusCodes");
 class discountController {
     async addDiscount(req, res) {
         try {
-            const { bookId, discountId } = req.body;
+            const {bookId}=req.query
+
+            const { discountId } = req.body;
     
             // Check if the book exists
             const book = await bookModel.findById(bookId);

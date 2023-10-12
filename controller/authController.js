@@ -79,7 +79,7 @@ class authenController {
             const auth = await authModel.findOne({ email: email });
             if (!auth) {
                 fs.appendFile("../server/print.log", `Unregistered user tried logging in ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM`);
-                return res.status(HTTP_STATUS.NOT_FOUND).send(success("User is not registered"));
+                return res.status(HTTP_STATUS.OK).send(failure("User is not registered"));
             }
             // if (auth.role !== role) {
             //     return res.status(400).send(success("Invalid Role"));
@@ -95,7 +95,7 @@ class authenController {
                     await auth.save();
                 } else {
                     fs.appendFile("../server/print.log", `User blocked at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM`);
-                    return res.status(HTTP_STATUS.FORBIDDEN).send(success("User is blocked. Please try again after 1 minute"));
+                    return res.status(HTTP_STATUS.OK).send(failure("User is blocked. Please try again after 1 minute"));
                 }
             }
             const checkedPassword = await bcrypt.compare(password, auth.password)
@@ -119,7 +119,7 @@ class authenController {
                     auth.blocked = true;
                     await auth.save();
                     fs.appendFile("../server/print.log", `User blocked for logging in with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
-                    return res.status(HTTP_STATUS.FORBIDDEN).send(success("User is blocked due to too many unsuccessful login attempts."));
+                    return res.status(HTTP_STATUS.OK).send(failure("User is blocked due to too many unsuccessful login attempts."));
                 }
 
                 auth.loginAttempts = recentLoginAttempts;
@@ -128,7 +128,7 @@ class authenController {
                 console.log("auth.loginAttempts 2", auth.loginAttempts)
                 await auth.save();
                 fs.appendFile("../server/print.log", `Logged with incorrect credentials at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
-                return res.status(HTTP_STATUS.UNAUTHORIZED).send(success("Incorrect credentials"));
+                return res.status(HTTP_STATUS.OK).send(failure("Incorrect credentials"));
             }
 
 

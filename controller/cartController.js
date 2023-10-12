@@ -65,13 +65,14 @@ class cartController {
                 return res.status(400).send(failure(`Insufficient stock for book ${bookItem.title}`));
             }
 
-            cartItem = await cartModel.findById(userItem.cartId);
+            // cartItem = await cartModel.findById(userItem.cartId);
             if (cartItem) {
-                console.log("cartItem", cartItem);
+                // console.log("cartItem", cartItem);
                 flag = true;
                 const existingBook = cartItem.bookId.find((cartBook) =>
                     cartBook.id.equals(bookItem._id)
                 );
+                console.log("cartItem",cartItem,"existingBook",existingBook)
                 if (existingBook) {
                     // Increase the quantity
                     console.log("if block is working");
@@ -113,7 +114,7 @@ class cartController {
                     // Use regular price if no discount
                     total += bookItem.price * BookId.quantity;
                 }
-                console.log("total:", total, " (Type:", typeof total, ")");
+                // console.log("total:", total, " (Type:", typeof total, ")");
 
                 // const newCart = new cartModel({ userId, BookId, total });
                 const newCart = new cartModel({ userId: userItem._id, bookId: [BookId], total: total });
@@ -149,6 +150,91 @@ class cartController {
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
+    async deleteFromCart(req, res) {
+  try {
+    const { BookId } = req.body;
+    const token = req.headers.authorization.split(' ')[1];
+    const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
+    const userItem = await userModel.findOne({ email: decodedToken.email });
+
+    if (!userItem) {
+      fs.appendFile("../server/print.log", `user not found for adding cart at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+      return res.status(404).send(failure(`User with ID ${userId} not found`));
+    }
+
+    const cartItem = await cartModel.findById(userItem.cartId);
+
+    if (cartItem) {
+      if (cartItem.checked) {
+        await cartModel.findByIdAndDelete(userItem.cartId);
+        userItem.cartId = undefined;
+        await userItem.save();
+      }
+    }
+
+    const bookItem = await bookModel.findById(BookId.id);
+
+    if (!bookItem) {
+      return res.status(404).send(failure(`Book with ID ${BookId.id} not found`));
+    }
+
+    if (cartItem) {
+      const existingBook = cartItem.bookId.find((cartBook) =>
+        cartBook.id.equals(bookItem._id)
+      );
+
+      if (existingBook) {
+        existingBook.quantity -= BookId.quantity;
+
+        // Check if the quantity becomes zero or less
+        if (existingBook.quantity <= 0) {
+          cartItem.bookId = cartItem.bookId.filter((cartBook) =>
+            !cartBook.id.equals(bookItem._id)
+          );
+        }
+      } else {
+        return res.status(404).send(failure(`You did not add book ID ${BookId.id} to cart`));
+      }
+
+      let total = 0;
+
+      if (cartItem.bookId.length > 0) {
+        total = await cartItem.bookId.reduce(async (acc, cartBook) => {
+          const book = await bookModel.findById(cartBook.id);
+      
+          if (book) {
+            if (book.discount) {
+              return (await acc) + book.discountedPrice * cartBook.quantity;
+            } else {
+              return (await acc) + book.price * cartBook.quantity;
+            }
+          }
+          return await acc;
+        }, Promise.resolve(0));
+      }
+      
+
+      cartItem.total = total;
+      await cartItem
+        .save()
+        .then((data) => {
+          fs.appendFile("../server/print.log", `cart update succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+          return res.status(200).send(success("Existing cart updated", { Transaction: data }));
+        })
+        .catch((err) => {
+          console.log(err);
+          return res.status(500).send(failure("Failed to update the cart"));
+        });
+    } else {
+      return res.status(404).send(failure(`Cart not found`));
+    }
+  } catch (error) {
+    console.error('Add cart error', error);
+    fs.appendFile("../server/print.log", `Add cart error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
     async removeFromCart(req, res) {
         try {
             const { BookId } = req.body;
@@ -339,17 +425,39 @@ class cartController {
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
 
             console.log("decodedToken", decodedToken)
-            if (!decodedToken.id.cartId) {
-                fs.appendFile("../server/print.log", `no cart to show at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
-                return res.status(404).send(failure(`You don't have any cart`));
-            }
-            // Find the user's cart using the cartId from the decodedToken
-            const userCart = await cartModel.findById(decodedToken.id.cartId);
+            // if (!decodedToken.id.cartId) {
+            //     fs.appendFile("../server/print.log", `no cart to show at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            //     return res.status(404).send(failure(`You don't have any cart`));
+            // }
 
-            if (!userCart) {
-                fs.appendFile("../server/print.log", `no user for cart to show at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
-                return res.status(404).send(failure(`Cart with ID ${decodedToken.cartId} not found`));
+            if (!decodedToken.id.email) {
+                fs.appendFile("../server/print.log", `No email found in the decoded token at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).send(failure(`Email not found in the decoded token`));
             }
+    
+            // Find the user based on the decoded email
+            const user = await userModel.findOne({ email: decodedToken.id.email });
+    
+            if (!user) {
+                fs.appendFile("../server/print.log", `User not found for the given email at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).send(failure(`User with email ${decodedToken.id.email} not found`));
+            }
+    
+            if (!user.cartId) {
+                fs.appendFile("../server/print.log", `No cartId found for the user at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+                return res.status(404).send(failure(`User with email ${decodedToken.id.email} does not have a cart`));
+            }
+    
+            // Find the user's cart using the cartId
+            const userCart = await cartModel.findById(user.cartId);
+            
+            // // Find the user's cart using the cartId from the decodedToken
+            // const userCart = await cartModel.findById(decodedToken.id.cartId);
+
+            // if (!userCart) {
+            //     fs.appendFile("../server/print.log", `no user for cart to show at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
+            //     return res.status(404).send(failure(`Cart with ID ${decodedToken.id.cartId} not found`));
+            // }
 
             // Populate the userCart with book details (assuming you have a 'bookId' field in the cart model)
             await userCart.populate({

@@ -8,6 +8,7 @@ const HTTP_STATUS = require("../constants/statusCodes");
 const isAuthorised = (req, res, next) => {
     try {
         if (!req.headers.authorization) {
+            console.log("Unauthorised access, login korenai")
             return res.status(200).send(success("Unauthorised access"))
         }
         const jwt = req.headers.authorization.split(" ")[1];

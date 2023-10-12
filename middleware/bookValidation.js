@@ -106,7 +106,8 @@ const bookValidator = (req, res, next) => {
 }
 const bookUpdateValidator = (req, res, next) => {
     try {
-        const { title, author, price, stock, genre, pages, category, publisher, description, rate } = req.body;
+        const {title}=req.query
+        const {  author, price, stock, genre, pages, category, publisher, description, rate } = req.body;
         const message = [];
 
         if (title) {

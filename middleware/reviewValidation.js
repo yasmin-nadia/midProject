@@ -8,7 +8,8 @@ const mongoose = require("mongoose");
 const HTTP_STATUS = require("../constants/statusCodes");
 const reviewValidator = (req, res, next) => {
     try {
-        const { reviewText, bookId } = req.body;
+        const { reviewText} = req.body;
+        const {bookId}=req.query;
         const message=[]
 
         if (typeof reviewText !== 'string' || reviewText.length <5|| reviewText.length > 200) {
@@ -32,7 +33,7 @@ const reviewValidator = (req, res, next) => {
 }
 const reviewDeleteValidator = (req, res, next) => {
     try {
-        const { bookId } = req.body;
+        const { bookId } = req.query
         const message=[]
         if (!mongoose.Types.ObjectId.isValid(bookId)) {
             message.push("Invalid bookId.");
@@ -51,7 +52,8 @@ const reviewDeleteValidator = (req, res, next) => {
 }
 const rateValidator = (req, res, next) => {
     try {
-        const { rate, bookId } = req.body;
+        const { rate } = req.body;
+        const {bookId}=req.query;
         const message = [];
 
         // Check if rate is a number and within the range of 1 to 5
@@ -77,7 +79,7 @@ const rateValidator = (req, res, next) => {
 }
 const rateDeleteValidator = (req, res, next) => {
     try {
-        const { bookId } = req.body;
+        const { bookId } = req.query
         const message=[]
         if (!mongoose.Types.ObjectId.isValid(bookId)) {
             message.push("Invalid bookId.");

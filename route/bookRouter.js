@@ -36,12 +36,14 @@ routes.put("/updaterate",isAuthorised,isUser,rateValidator,bookController.update
 routes.delete("/deleterate",isAuthorised,isUser,rateDeleteValidator,bookController.deleteRate)
 //ADD TO CART AND CHECKOUT
 routes.post("/addtocart",isAuthorised,isUser,cartValidator,cartController.AddtoCart)
-routes.delete("/removefromcart",isAuthorised,isUser,cartRemoveValidator,cartController.removeFromCart)
+// routes.delete("/removefromcart",isAuthorised,isUser,cartRemoveValidator,cartController.removeFromCart)
+routes.delete("/removefromcart",isAuthorised,isUser,cartValidator,cartController.deleteFromCart)
 routes.post("/checkout",isAuthorised,isUser,cartController.createTransaction)
 routes.get("/showcart",isAuthorised,isUser,cartController.showCart)
 routes.get("/showtransaction",isAuthorised,isUser,cartController.showTransaction)
 routes.get("/showalltransaction",isAuthorised,isAdmin,cartController.showAllTransaction)
 routes.delete("/cancelorder",cartController.cancelOrder)
+// deleteFromCart
 //ADD TO DISCOUNT
 routes.post("/adddiscount",isAuthorised,isAdmin,discountController.addDiscount)
 routes.put("/updatediscount",isAuthorised,isAdmin,discountUpdateValidator,discountController.updateDiscount)

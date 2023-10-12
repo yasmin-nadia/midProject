@@ -57,7 +57,8 @@ class bookController {
     }
     async updateBook(req, res) {
         try {
-            const { title, author, price, stock, genre, pages, category, publisher, description } = req.body;
+            const {title}=req.query
+            const { author, price, stock, genre, pages, category, publisher, description } = req.body;
             const existingBook = await bookModel.findOne({ title: title });
             if (!existingBook) {
                 return res.status(200).send(success("This book does not exist"));
@@ -111,7 +112,7 @@ class bookController {
     }
     async deleteBook(req, res) {
         try {
-            const { title } = req.body;
+            const {title}=req.query
             const book = await bookModel.findOne({ title: title });
 
             if (!book) {
@@ -131,9 +132,15 @@ class bookController {
     async getBook(req, res) {
         try {
             // object destructuring
-            let { page, limit, searchParam, price, order, pages, priceFlow, sortField, category, stockFlow, pagesFlow, stock, priceUpperBound, priceLowerBound, rate, rateFlow, genre } = req.query;
+            let { page, limit, priceFlow,price,searchParam, order, pages,  sortField, category, stockFlow, pagesFlow, stock, priceUpperBound, priceLowerBound, rate, rateFlow, genre, bookId } = req.query;
+            // let {priceFlow,price}=req.body
 
             console.log("{page,limit}", page, limit);
+            if (bookId) {
+                if (!mongoose.Types.ObjectId.isValid(bookId)) {
+                    return res.status(400).send({ error: "Invalid ObjectId" });
+                }
+            }
 
             // Create a query object
             const query = {};
@@ -141,7 +148,7 @@ class bookController {
                 page = 1
             }
             if (!(limit)) {
-                limit = 5
+                limit = 12
             }
 
             // creates regular expression
@@ -213,6 +220,11 @@ class bookController {
                     $eq: parseFloat(pages)
                 };
             }
+            
+                if (bookId) {
+                    query._id = new mongoose.Types.ObjectId(bookId);
+                }
+            
 
             // pagination
             const options = {
@@ -278,7 +290,8 @@ class bookController {
 
     async addReview(req, res) {
         try {
-            const { reviewText, bookId } = req.body;
+            const { reviewText } = req.body;
+            let {bookId}= req.query;
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
@@ -291,7 +304,7 @@ class bookController {
 
             if (existingReview) {
                 fs.appendFile("../server/print.log", `More than once review addition at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
-                return res.status(400).send(failure({ error:'You have already provided a review for this book.' }));
+                return res.status(400).send(failure({ error: 'You have already provided a review for this book.' }));
 
             }
 
@@ -304,8 +317,8 @@ class bookController {
 
             const savedReview = await newReview.save();
             fs.appendFile("../server/print.log", `Review addition success at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
-            return res.status(200).send(success( 'Review added successfully',{ review: savedReview }));
-            
+            return res.status(200).send(success('Review added successfully', { review: savedReview }));
+
 
 
 
@@ -317,14 +330,15 @@ class bookController {
     }
     async updateReview(req, res) {
         try {
-            const { reviewText, bookId } = req.body;
+            const { reviewText} = req.body;
+            const { bookId} = req.query;
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
             if (!user) {
                 fs.appendFile("../server/print.log", `Book addition succeeded at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
-                return res.status(404).send(success('User is not found' ));
-        
+                return res.status(404).send(success('User is not found'));
+
             }
 
             // Check if a review with the same userId and bookId already exists
@@ -352,7 +366,7 @@ class bookController {
     }
     async deleteReview(req, res) {
         try {
-            const { bookId } = req.body;
+            const { bookId } = req.query;
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
@@ -371,7 +385,7 @@ class bookController {
             if (!result2) {
                 fs.appendFile("../server/print.log", `No review found for delete at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
                 return res.status(404).send(success('No data found to delete'));
-               
+
             }
             else {
                 // console.log("result1",result1,"bookId",bookId,'userId',user._id)
@@ -386,7 +400,8 @@ class bookController {
     }
     async addRate(req, res) {
         try {
-            const { rate, bookId } = req.body;
+            const { rate } = req.body;
+            const {bookId}=req.query;
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
@@ -448,7 +463,8 @@ class bookController {
     }
     async updateRate(req, res) {
         try {
-            const { rate, bookId } = req.body;
+            const { rate} = req.body;
+            const {bookId}=req.query;
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
@@ -502,7 +518,8 @@ class bookController {
     }
     async deleteRate(req, res) {
         try {
-            const { bookId } = req.body;
+            
+            const {bookId}=req.query;
             const token = req.headers.authorization.split(' ')[1];
             const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
             const user = await userModel.findOne({ email: decodedToken.email });
@@ -554,7 +571,7 @@ class bookController {
                 return res.status(200).send(success(`rate is deleted successfully`));
             }
         } catch (error) {
-        
+
             console.error('Rate review error', error);
             fs.appendFile("../server/print.log", `Rate deletion error at ${(new Date().getHours())}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `);
             return res.status(500).json({ error: 'Internal server error' });
