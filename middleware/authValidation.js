@@ -18,16 +18,16 @@ const isAuthorised = (req, res, next) => {
             next();
         }
         else {
-            return res.status(200).send(success("User is not authorised"))
+            return res.status(200).send(("User is not authorised"))
         }
     }
     catch (error) {
         console.log("token error", error)
         if (error instanceof jsonwebtoken.JsonWebTokenError) {
-            return res.status(200).send(success("Token Invalid"))
+            return res.status(400).send(failure("Token Invalid"))
         }
         if (error instanceof jsonwebtoken.TokenExpiredError) {
-            return res.status(200).send(success("Token expired"))
+            return res.status(400).send(failure("Token expired"))
         }
         const jwt = req.headers.authorization.split(" ")[1];
         // console.log("jwt", jwt)
