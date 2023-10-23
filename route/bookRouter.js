@@ -1,7 +1,8 @@
 const express = require("express");
 const routes = express();
 // const {validationResult}=require("express-validator");
-
+const upload = require("../config/file");
+const multer = require("multer");
 const authenController = require("../controller/authController");
 const {
   isAuthorised,
@@ -36,6 +37,9 @@ const urlnotfound = require("../constants/urlnotfound");
 const bookController = require("../controller/bookController");
 const cartController = require("../controller/cartController");
 const discountController = require("../controller/discountController");
+const FileController = require("../controller/fileController");
+const { MulterError } = require("multer");
+
 // USER
 routes.post("/createuser", userValidator, authenController.signUp);
 routes.post("/login", userLoginValidator, authenController.login);
@@ -193,6 +197,16 @@ routes.put(
 //forget and reset password route
 routes.post("/forgetpassword", authenController.sendForgetPasswordEmail);
 routes.post("/resetpassword", authenController.resetPassword);
+
+//UPLOAD FILE
+routes.post(
+  "/files/upload-file",
+  upload.single("file"),
+  FileController.uploadFile
+);
+routes.get("/get/:filepath", FileController.getFile);
+
+// routes.get("/get/:filepath", FileController.getFile);
 //URL NOT FOUND
 routes.use(urlnotfound.notFound);
 module.exports = routes;
