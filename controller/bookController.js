@@ -147,7 +147,7 @@ class bookController {
   }
   async deleteBook(req, res) {
     try {
-      const { title } = req.query;
+      const { title } = req.body;
       const book = await bookModel.findOne({ title: title });
 
       if (!book) {
@@ -177,11 +177,11 @@ class bookController {
       let {
         page,
         limit,
-        priceFlow,
-        price,
         searchParam,
+        price,
         order,
         pages,
+        priceFlow,
         sortField,
         category,
         stockFlow,
@@ -192,9 +192,7 @@ class bookController {
         rate,
         rateFlow,
         genre,
-        bookId,
       } = req.query;
-      // let {priceFlow,price}=req.body
 
       console.log("{page,limit}", page, limit);
       if (bookId) {
@@ -377,11 +375,13 @@ class bookController {
           "../server/print.log",
           `More than once review addition at ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `
         );
-        return res.status(400).send(
-          failure({
-            error: "You have already provided a review for this book.",
-          })
-        );
+        return res
+          .status(400)
+          .send(
+            failure({
+              error: "You have already provided a review for this book.",
+            })
+          );
       }
 
       // If no existing review found, save the new review
@@ -410,8 +410,7 @@ class bookController {
   }
   async updateReview(req, res) {
     try {
-      const { reviewText } = req.body;
-      const { bookId } = req.query;
+      const { reviewText, bookId } = req.body;
       const token = req.headers.authorization.split(" ")[1];
       const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
       const user = await userModel.findOne({ email: decodedToken.email });
@@ -447,10 +446,12 @@ class bookController {
         "../server/print.log",
         `Review update success at ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `
       );
-      return res.status(200).json({
-        message: "Review updated successfully",
-        review: updatedReview,
-      });
+      return res
+        .status(200)
+        .json({
+          message: "Review updated successfully",
+          review: updatedReview,
+        });
     } catch (error) {
       console.error("Update review error", error);
       fs.appendFile(
@@ -462,7 +463,7 @@ class bookController {
   }
   async deleteReview(req, res) {
     try {
-      const { bookId } = req.query;
+      const { bookId } = req.body;
       const token = req.headers.authorization.split(" ")[1];
       const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
       const user = await userModel.findOne({ email: decodedToken.email });
@@ -508,8 +509,7 @@ class bookController {
   }
   async addRate(req, res) {
     try {
-      const { rate } = req.body;
-      const { bookId } = req.query;
+      const { rate, bookId } = req.body;
       const token = req.headers.authorization.split(" ")[1];
       const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
       const user = await userModel.findOne({ email: decodedToken.email });
@@ -587,8 +587,7 @@ class bookController {
   }
   async updateRate(req, res) {
     try {
-      const { rate } = req.body;
-      const { bookId } = req.query;
+      const { rate, bookId } = req.body;
       const token = req.headers.authorization.split(" ")[1];
       const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
       const user = await userModel.findOne({ email: decodedToken.email });
@@ -656,7 +655,7 @@ class bookController {
   }
   async deleteRate(req, res) {
     try {
-      const { bookId } = req.query;
+      const { bookId } = req.body;
       const token = req.headers.authorization.split(" ")[1];
       const decodedToken = jsonwebtoken.decode(token, process.env.SECRET_KEY);
       const user = await userModel.findOne({ email: decodedToken.email });

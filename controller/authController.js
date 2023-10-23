@@ -61,7 +61,7 @@ class authenController {
         if (!result2) {
           return res
             .status(HTTP_STATUS.BAD_REQUEST)
-            .send(failure("Failed to store user information", result2));
+            .send(success("Failed to store user information", result2));
         }
         console.log("result", result);
         console.log("result2", result2);
@@ -71,13 +71,13 @@ class authenController {
       } else {
         return res
           .status(HTTP_STATUS.OK)
-          .send(failure("Authentication has not been succeeded"));
+          .send(success("Authentication has not been succeeded"));
       }
     } catch (error) {
       console.log("The error is", error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .send(failre("Internal server error"));
+        .send(success("Internal server error"));
     }
   }
   async login(req, res) {
@@ -90,8 +90,8 @@ class authenController {
           `Unregistered user tried logging in ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()} PM`
         );
         return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .send(failure("User is not registered"));
+          .status(HTTP_STATUS.NOT_FOUND)
+          .send(success("User is not registered"));
       }
       // if (auth.role !== role) {
       //     return res.status(400).send(success("Invalid Role"));
@@ -113,8 +113,8 @@ class authenController {
             `User blocked at ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()} PM`
           );
           return res
-            .status(HTTP_STATUS.OK)
-            .send(failure("User is blocked. Please try again after 1 minute"));
+            .status(HTTP_STATUS.FORBIDDEN)
+            .send(success("User is blocked. Please try again after 1 minute"));
         }
       }
       const checkedPassword = await bcrypt.compare(password, auth.password);
@@ -150,9 +150,9 @@ class authenController {
             `User blocked for logging in with incorrect credentials at ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `
           );
           return res
-            .status(HTTP_STATUS.BAD_REQUEST)
+            .status(HTTP_STATUS.FORBIDDEN)
             .send(
-              failure(
+              success(
                 "User is blocked due to too many unsuccessful login attempts."
               )
             );
@@ -168,8 +168,8 @@ class authenController {
           `Logged with incorrect credentials at ${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()} PM `
         );
         return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .send(failure("Incorrect credentials"));
+          .status(HTTP_STATUS.UNAUTHORIZED)
+          .send(success("Incorrect credentials"));
       }
     } catch (error) {
       console.log("Login error", error);
@@ -399,130 +399,6 @@ class authenController {
       return res
         .status(500)
         .send(success({ message: "Internal server error" }));
-    }
-  }
-
-  async sendForgetPasswordEmail(req, res) {
-    try {
-      console.log("this controller is working");
-      const { email } = req.body;
-      if (!email || email === "") {
-        return res
-          .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
-          .send(failure("Recipient email not found"));
-      }
-      const auth = await authModel.findOne({ email: email }).populate("id");
-      if (!auth) {
-        return res.status(404).send(failure("User not found"));
-      }
-      const resetToken = crypto.randomBytes(32).toString("hex");
-      auth.resetPasswordToken = resetToken;
-      auth.resetPasswordExpire = Date.now() + 60 * 60 * 1000;
-      auth.resetPassword = true;
-      await auth.save();
-      const resetURL = path.join(
-        process.env.FRONTEND_URL,
-        "reset-password",
-        resetToken,
-        auth._id.toString()
-      );
-      console.log("reset url", resetURL);
-      const htmlBody = await ejsRenderFile(
-        path.join(__dirname, "..", "views", "forgot-password.ejs"),
-        {
-          name: auth.name,
-          resetURL: resetURL,
-        }
-      );
-      console.log("auth", auth);
-      const result = await transporter.sendMail({
-        from: "my-app@system.com",
-        to: `${auth.name} ${email}`,
-        subject: "Forgot passord",
-        html: htmlBody,
-      });
-      if (result.messageId) {
-        return res
-          .status(200)
-          .send(failure("Successfully requested for resetting password"));
-      }
-      return res
-        .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
-        .send(failure("Something went wrong"));
-    } catch (error) {
-      console.log("Error clicking after forget password", error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .send(failure("Internal server error"));
-    }
-  }
-  async resetPassword(req, res) {
-    try {
-      const { token, userId, newPassword, oldPassword } = req.query;
-      console.log(
-        "token, userId, newPassword, oldPassword ",
-        token,
-        userId,
-        newPassword,
-        oldPassword
-      );
-      const auth = await authModel.findOne({
-        _id: new mongoose.Types.ObjectId(userId),
-      });
-      if (!auth) {
-        return res.status(404).send(failure("User not found"));
-      }
-      if (auth.resetPasswordExpire < Date.now()) {
-        return res.status(HTTP_STATUS.GONE).send(failure("Expired request"));
-      }
-      // if (
-      //   !auth.token.includes(token) ||
-      //   auth.resetPasswordToken !== token ||
-      //   auth.resetPassword === false
-      // ) {
-      //   return res
-      //     .status(HTTP_STATUS.UNAUTHORIZED)
-      //     .send(failure("Invalid or expired token"));
-      // }
-      if (auth.resetPasswordToken !== token || auth.resetPassword === false) {
-        return res
-          .status(HTTP_STATUS.UNAUTHORIZED)
-          .send(failure("Invalid token"));
-      }
-      if (newPassword !== oldPassword) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .send(failure("Passwords do not match"));
-      }
-      if (await bcrypt.compare(newPassword, auth.password)) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .send(failure("Password cannot be same as old password"));
-      }
-      const hashedPassword = await bcrypt.hash(newPassword, 10).then((hash) => {
-        return hash;
-      });
-      const result = await authModel.findOneAndUpdate(
-        { _id: new mongoose.Types.ObjectId(userId) },
-        {
-          password: hashedPassword,
-          resetPassword: false,
-          resetPasswordExpire: null,
-          resetPasswordToken: null,
-          $push: { token: token },
-        }
-      );
-      console.log("result", result);
-      if (result.isModified) {
-        return res
-          .status(HTTP_STATUS.OK)
-          .send(failure("Successfully upated the password"));
-      }
-    } catch (error) {
-      console.log("Error clicking after forget password", error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .send(failure("Internal server error"));
     }
   }
 
